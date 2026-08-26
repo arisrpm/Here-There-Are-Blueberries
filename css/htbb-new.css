@@ -88,3 +88,9 @@
     transition: none;
   }
 }
+
+@media (max-width: 940px) {
+    .quotes-slider {
+        padding: 0 0 55px;
+    }
+}
