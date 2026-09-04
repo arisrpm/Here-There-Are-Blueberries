@@ -14,6 +14,7 @@
  */
 
 .htbb-calendar {
+    font-family: 'avenir next' !important;
   /* One indirection so every rule below reads from a local name. The host
      variable wins whenever it is set; the literal is a safety net, not a
      design decision. */
@@ -71,6 +72,7 @@
   gap: 0.5rem;
   margin-top: -2em;
   padding-bottom: 0;
+  font-family: 'avenir next' !important;
 }
 
 .htbb-calendar__month {
@@ -78,6 +80,7 @@
   min-width: 12ch;
   letter-spacing: 0.02em;
   text-align: center;
+  font-family: 'avenir next' !important;
 }
 
 .htbb-calendar__prev,
@@ -143,11 +146,9 @@
   text-align: center;
   text-wrap: balance;
   font-weight: bold;
+  font-family: 'avenir next' !important;
 }
 
-.htbb-calendar__legend br {
-  display: none;
-}
 
 .htbb-calendar__legend[hidden] {
   display: none;
@@ -185,14 +186,15 @@
 
 .htbb-calendar__weekday,
 .htbb-calendar__day {
-  border-right: 1px solid var(--cal-rule);
-  border-bottom: 1px solid var(--cal-rule);
+  border-right: 2px solid #232b31;
+  border-bottom: 2px solid #232b31;  
 }
 
 /* The band is one solid bar of ink. Its cell borders are the same ink, so the
    seven columns fuse into a single block instead of showing seams. */
 .htbb-calendar__weekday {
   padding: 0.6rem 0.25rem;
+  font-family: 'avenir next' !important;
 
 
   border-right-color: var(--cal-ink);
@@ -201,7 +203,6 @@
 
   font-size: clamp(1rem, 0.5vw + 0.85rem, 1.25rem);
   font-weight: 700;
-  letter-spacing: 0.12em;
   text-align: center;
   text-transform: uppercase;
 }
@@ -257,7 +258,7 @@
 
 /* A dark day is a scheduling fact, not a gap. The wash says so. */
 .htbb-calendar__day.is-dark {
-  background: var(--cal-dark-day);
+  
 }
 
 .htbb-calendar__day.is-empty {
@@ -436,7 +437,7 @@
   gap: 1rem;
 
   padding: 0.6rem 0;
-  border-bottom: 1px solid var(--cal-rule);
+  border-bottom: 2px solid #232b31;
 }
 
 .htbb-calendar__list-date {
