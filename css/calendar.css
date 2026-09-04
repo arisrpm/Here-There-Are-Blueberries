@@ -136,12 +136,17 @@
    <br> inside a flex container is inert. */
 .htbb-calendar__legend {
   display: block;
-  max-width: 48ch;
+  max-width: 100%;
   margin: 0.5rem auto 1.5rem;
-
+  color: var(--cal-accent);
   line-height: 1.5;
   text-align: center;
   text-wrap: balance;
+  font-weight: bold;
+}
+
+.htbb-calendar__legend br {
+  display: none;
 }
 
 .htbb-calendar__legend[hidden] {
@@ -189,12 +194,12 @@
 .htbb-calendar__weekday {
   padding: 0.6rem 0.25rem;
 
-  background: var(--cal-ink);
+
   border-right-color: var(--cal-ink);
   border-bottom-color: var(--cal-ink);
-  color: var(--cal-paper);
+  color:  var(--cal-ink);
 
-  font-size: clamp(0.625rem, 0.35vw + 0.55rem, 0.8125rem);
+  font-size: clamp(1rem, 0.5vw + 0.85rem, 1.25rem);
   font-weight: 700;
   letter-spacing: 0.12em;
   text-align: center;
