@@ -521,7 +521,7 @@
         </div>
 
         <p class="htbb-calendar__legend"${showLegend(year, month) ? '' : ' hidden'}>
-          ${CONFIG.legendBestAvailableText ? `<br>${HTBB.esc(CONFIG.legendBestAvailableText)}` : ''}
+          ${CONFIG.legendBestAvailableText ? `${HTBB.esc(CONFIG.legendBestAvailableText)}` : ''}
           <span class="htbb-calendar__swatch" aria-hidden="true"></span>
           <span class="htbb-calendar__sr">highlighted showtimes</span>
         </p>

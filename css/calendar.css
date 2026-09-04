@@ -140,7 +140,7 @@
 .htbb-calendar__legend {
   display: block;
   max-width: 100%;
-  margin: 0.5rem auto 1.5rem;
+  margin: 0 auto 1.5rem;
   color: var(--cal-accent);
   line-height: 1.5;
   text-align: center;
@@ -152,6 +152,17 @@
 
 .htbb-calendar__legend[hidden] {
   display: none;
+}
+
+.htbb-calendar__month p {
+  color: var(--cal-accent);
+  line-height: 1.5;
+  text-align: center;
+  text-wrap: balance;
+  font-weight: bold;
+  font-family: 'avenir next' !important;
+  font-size: 20px;
+  margin-bottom: 1em;
 }
 
 /* Sized in em and aligned on the baseline, so it tracks the legend's type at
