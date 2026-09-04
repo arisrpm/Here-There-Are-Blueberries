@@ -5,6 +5,10 @@
 .htbb-header-link {
   opacity: 0;
   animation: htbbFadeIn 1.5s ease forwards;
+  margin: 0;
+    padding: 0;
+    top: 4px;
+    position: relative;  
 }
 
 @keyframes htbbFadeIn {
