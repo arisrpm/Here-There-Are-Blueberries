@@ -21,8 +21,9 @@
   color: #fff;
   border: 1px solid #000;
   background: #000;
-  padding: 12px 10px;
+    padding: 12px 10px;
   transition: all 0.5s;
+  font-size: 44px
 }
 
 .htbb-header-link a:hover,
