@@ -509,6 +509,7 @@
 
           <h2 class="htbb-calendar__month" aria-live="polite">
             ${MONTH_NAMES[month]}
+            <p>${HTBB.esc(CONFIG.legendText)}</p>
           </h2>
 
           <button
@@ -520,7 +521,6 @@
         </div>
 
         <p class="htbb-calendar__legend"${showLegend(year, month) ? '' : ' hidden'}>
-          ${HTBB.esc(CONFIG.legendText)}
           ${CONFIG.legendBestAvailableText ? `<br>${HTBB.esc(CONFIG.legendBestAvailableText)}` : ''}
           <span class="htbb-calendar__swatch" aria-hidden="true"></span>
           <span class="htbb-calendar__sr">highlighted showtimes</span>
