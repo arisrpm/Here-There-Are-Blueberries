@@ -214,7 +214,7 @@
   color:  var(--cal-ink);
 
   font-size: clamp(1rem, 0.5vw + 0.85rem, 1.25rem);
-  font-weight: 700;
+  font-weight: 500;
   text-align: center;
   text-transform: uppercase;
 }
@@ -255,7 +255,7 @@
   width: 100%;
 
   font-size: 0.875rem;
-  font-weight: 700;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.04em;
   opacity: 0.85;
@@ -316,7 +316,7 @@
 
   background: none;
   border: 1px solid var(--cal-button-rule);
-  color: inherit;
+  color: #333f48;
 
   font-size: clamp(0.8125rem, 0.5vw + 0.7rem, 1.0625rem);
   font-weight: 600;
