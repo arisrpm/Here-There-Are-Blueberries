@@ -277,31 +277,24 @@ body.htbb-creative-modal-open {
         gap: 24px;
     }
 
-    /*
-     * Don't try to preserve 4-across rows on mobile.
-     * Every configured row becomes two columns.
-     */
     .htbb-creative__row {
-        grid-template-columns:
-            repeat(
-                min(2, var(--creative-columns)),
-                minmax(0, 1fr)
-            );
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 24px 16px;
+    }
+
+    /* A row containing only one person stays one column */
+    .htbb-creative__row[style*="--creative-columns: 1"] {
+        grid-template-columns: minmax(0, 1fr);
     }
 
     .htbb-creative-modal__dialog {
         width: calc(100% - 24px);
         max-height: calc(100vh - 24px);
-        padding:
-            55px
-            30px
-            40px;
+        padding: 55px 30px 40px;
     }
 
     .htbb-creative-modal__arrow {
         width: 34px;
         font-size: 46px;
     }
-
 }

@@ -17,23 +17,10 @@
      * H = WEBSITE
      * I = BIO
      * J = PER ROW
-     *
-     * PER ROW:
-     * Enter a number on the FIRST person of each row.
-     *
-     * Example:
-     *
-     * Row 2 = 2
-     * Row 4 = 4
-     * Row 8 = 4
-     *
-     * Produces:
-     * 2 people
-     * 4 people
-     * 4 people
      */
 
     const MODULE = '[HTBB Creative]';
+
 
     // ------------------------------------------------------------
     // CONFIG
@@ -46,17 +33,27 @@
         range: 'A:J',
     };
 
+
+    // ------------------------------------------------------------
+    // CONSTANTS
+    // ------------------------------------------------------------
+
     const DOC_URL =
         /docs\.google\.com\/document\/d\/(?:e\/)?([\w-]{16,})/;
 
     const INLINE_TAGS =
         /&lt;(\/?(?:em|strong|i|b|br)\s*\/?)&gt;/gi;
 
-    const bioCache = new Map();
+    const bioCache =
+        new Map();
 
     let people = [];
-    let activeIndex = null;
-    let lastFocusedElement = null;
+
+    let activeIndex =
+        null;
+
+    let lastFocusedElement =
+        null;
 
 
     // ------------------------------------------------------------
@@ -64,6 +61,7 @@
     // ------------------------------------------------------------
 
     const esc = value => {
+
         return String(value ?? '')
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
@@ -73,10 +71,34 @@
     };
 
 
+    /**
+     * Allow only basic formatting entered
+     * directly into Google Sheets.
+     *
+     * Supported:
+     *
+     * <strong>
+     * <b>
+     * <em>
+     * <i>
+     * <br>
+     */
+
+    const safeInlineHtml = value => {
+
+        return esc(value)
+            .replace(
+                INLINE_TAGS,
+                '<$1>'
+            );
+    };
+
+
     const normalizeUrl = value => {
 
         const url =
-            String(value || '').trim();
+            String(value || '')
+                .trim();
 
         if (!url) {
             return '';
@@ -97,6 +119,7 @@
             return parsed.href;
 
         } catch {
+
             return '';
         }
     };
@@ -106,26 +129,95 @@
 
         return Boolean(
             person &&
-            String(person.bio || '').trim()
+            String(
+                person.bio || ''
+            ).trim()
         );
     };
 
 
     // ------------------------------------------------------------
-    // BIO NAVIGATION — NO LOOPING
+    // PER ROW
     // ------------------------------------------------------------
+
+    /**
+     * Google Sheet can contain:
+     *
+     * One
+     * Two
+     * Three
+     * Four
+     *
+     * OR:
+     *
+     * 1
+     * 2
+     * 3
+     * 4
+     */
+
+    const parsePerRow = value => {
+
+        const raw =
+            String(value || '')
+                .trim()
+                .toLowerCase();
+
+        const values = {
+            one: 1,
+            two: 2,
+            three: 3,
+            four: 4,
+            five: 5,
+            six: 6,
+        };
+
+        if (
+            Object.prototype.hasOwnProperty.call(
+                values,
+                raw
+            )
+        ) {
+            return values[raw];
+        }
+
+        const numeric =
+            parseInt(
+                raw,
+                10
+            );
+
+        if (
+            Number.isInteger(numeric) &&
+            numeric >= 1 &&
+            numeric <= 6
+        ) {
+            return numeric;
+        }
+
+        return 1;
+    };
+
+
+    // ------------------------------------------------------------
+    // BIO NAVIGATION
+    // ------------------------------------------------------------
+
+    /**
+     * Finds the previous/next person
+     * who actually has a bio.
+     *
+     * Does NOT loop.
+     */
 
     const getBioIndex = (
         currentIndex,
         direction
     ) => {
 
-        if (!people.length) {
-            return null;
-        }
-
         let index =
-            currentIndex + direction;
+            currentIndex +
+            direction;
 
         while (
             index >= 0 &&
@@ -133,12 +225,15 @@
         ) {
 
             if (
-                hasBio(people[index])
+                hasBio(
+                    people[index]
+                )
             ) {
                 return index;
             }
 
-            index += direction;
+            index +=
+                direction;
         }
 
         return null;
@@ -146,17 +241,22 @@
 
 
     // ------------------------------------------------------------
-    // BIO — TEXT ENTERED DIRECTLY INTO SHEET
+    // INLINE BIO TEXT
     // ------------------------------------------------------------
 
     const richText = value => {
 
         return esc(value)
+
             .replace(
                 INLINE_TAGS,
                 '<$1>'
             )
-            .split(/\n{2,}/)
+
+            .split(
+                /\n{2,}/
+            )
+
             .map(block =>
                 block
                     .trim()
@@ -165,10 +265,13 @@
                         '<br>'
                     )
             )
+
             .filter(Boolean)
+
             .map(block =>
                 `<p>${block}</p>`
             )
+
             .join('');
     };
 
@@ -197,14 +300,17 @@
                 ) &&
                 url.pathname === '/url'
             ) {
+
                 return (
-                    url.searchParams.get('q') ||
+                    url.searchParams.get(
+                        'q'
+                    ) ||
                     href
                 );
             }
 
         } catch {
-            // Fall through.
+            // Use original href.
         }
 
         return href;
@@ -220,31 +326,40 @@
             new Set();
 
         doc
-            .querySelectorAll('style')
+            .querySelectorAll(
+                'style'
+            )
             .forEach(style => {
 
                 style.textContent.replace(
                     /\.([\w-]+)\s*\{([^}]*)\}/g,
-                    (_, name, body) => {
+                    (
+                        _,
+                        name,
+                        body
+                    ) => {
 
                         if (
                             /font-style\s*:\s*italic/i
                                 .test(body)
                         ) {
-                            italic.add(name);
+                            italic.add(
+                                name
+                            );
                         }
 
                         if (
                             /font-weight\s*:\s*(bold|[6-9]00)/i
                                 .test(body)
                         ) {
-                            bold.add(name);
+                            bold.add(
+                                name
+                            );
                         }
 
                         return '';
                     }
                 );
-
             });
 
         return {
@@ -263,10 +378,12 @@
             node.nodeType ===
             Node.TEXT_NODE
         ) {
+
             return esc(
                 node.nodeValue
             );
         }
+
 
         if (
             node.nodeType !==
@@ -275,11 +392,13 @@
             return '';
         }
 
+
         if (
             node.tagName === 'BR'
         ) {
             return '<br>';
         }
+
 
         let inner =
             Array
@@ -294,9 +413,13 @@
                 )
                 .join('');
 
-        if (!inner.trim()) {
+
+        if (
+            !inner.trim()
+        ) {
             return '';
         }
+
 
         const classes =
             Array.from(
@@ -308,14 +431,18 @@
                 'style'
             ) || '';
 
+
         const isItalic =
             node.tagName === 'EM' ||
             node.tagName === 'I' ||
             /font-style\s*:\s*italic/i
                 .test(style) ||
             classes.some(name =>
-                sets.italic.has(name)
+                sets.italic.has(
+                    name
+                )
             );
+
 
         const isBold =
             node.tagName === 'STRONG' ||
@@ -323,10 +450,13 @@
             /font-weight\s*:\s*(bold|[6-9]00)/i
                 .test(style) ||
             classes.some(name =>
-                sets.bold.has(name)
+                sets.bold.has(
+                    name
+                )
             );
 
 
+        // Links.
         if (
             node.tagName === 'A'
         ) {
@@ -354,14 +484,18 @@
 
 
         if (isItalic) {
+
             inner =
                 `<em>${inner}</em>`;
         }
 
+
         if (isBold) {
+
             inner =
                 `<strong>${inner}</strong>`;
         }
+
 
         return inner;
     };
@@ -377,7 +511,9 @@
                 );
 
         const sets =
-            emphasisClasses(doc);
+            emphasisClasses(
+                doc
+            );
 
         return Array
             .from(
@@ -385,16 +521,20 @@
                     'p'
                 )
             )
+
             .map(p =>
                 convertNode(
                     p,
                     sets
                 ).trim()
             )
+
             .filter(Boolean)
+
             .map(content =>
                 `<p>${content}</p>`
             )
+
             .join('');
     };
 
@@ -404,8 +544,12 @@
         if (
             bioCache.has(id)
         ) {
-            return bioCache.get(id);
+
+            return bioCache.get(
+                id
+            );
         }
+
 
         const pending =
             (async () => {
@@ -414,15 +558,20 @@
                     `https://docs.google.com/document/d/` +
                     `${id}/export?format=html`;
 
+
                 const response =
                     await fetch(
                         url,
                         {
-                            credentials: 'omit',
+                            credentials:
+                                'omit',
                         }
                     );
 
-                if (!response.ok) {
+
+                if (
+                    !response.ok
+                ) {
 
                     throw new Error(
                         `Google Doc request failed: ` +
@@ -432,17 +581,23 @@
                     );
                 }
 
+
                 const html =
                     await response.text();
 
-                return parseDoc(html);
+
+                return parseDoc(
+                    html
+                );
 
             })();
+
 
         bioCache.set(
             id,
             pending
         );
+
 
         return pending;
     };
@@ -459,15 +614,22 @@
                 `${config.sheetName}!${config.range}`
             );
 
+
         const url =
             `https://sheets.googleapis.com/v4/spreadsheets/` +
             `${config.sheetId}/values/${range}` +
             `?key=${encodeURIComponent(config.apiKey)}`;
 
-        const response =
-            await fetch(url);
 
-        if (!response.ok) {
+        const response =
+            await fetch(
+                url
+            );
+
+
+        if (
+            !response.ok
+        ) {
 
             throw new Error(
                 `Google Sheets request failed: ` +
@@ -475,14 +637,18 @@
             );
         }
 
+
         const data =
             await response.json();
+
 
         const rows =
             data.values || [];
 
+
         return rows
             .slice(1)
+
             .map(row => ({
 
                 name:
@@ -531,12 +697,11 @@
                     ).trim(),
 
                 perRow:
-                    parseInt(
-                        row[9],
-                        10
-                    ) || null,
-
+                    parsePerRow(
+                        row[9]
+                    ),
             }))
+
             .filter(person =>
                 person.name
             );
@@ -544,8 +709,30 @@
 
 
     // ------------------------------------------------------------
-    // CREATE DISPLAY ROWS
+    // CREATE ROW GROUPS
     // ------------------------------------------------------------
+
+    /**
+     * PER ROW controls how many people
+     * begin with the current record.
+     *
+     * Example:
+     *
+     * One
+     * One
+     * Two
+     * Two
+     * Three
+     * Three
+     * Three
+     *
+     * becomes:
+     *
+     * [1]
+     * [1]
+     * [2 people]
+     * [3 people]
+     */
 
     const createGroups = () => {
 
@@ -553,42 +740,48 @@
 
         let index = 0;
 
+
         while (
-            index < people.length
+            index <
+            people.length
         ) {
 
-            /**
-             * PER ROW is read from the first person
-             * in each new group.
-             *
-             * Default = 4.
-             */
+            const requestedCount =
+                people[index]
+                    .perRow || 1;
 
-            const requested =
-                people[index].perRow || 4;
 
-            const count =
-                Math.max(
-                    1,
-                    Math.min(
-                        requested,
-                        6
+            const groupPeople =
+                people
+                    .slice(
+                        index,
+                        index +
+                        requestedCount
                     )
-                );
+
+                    .map(
+                        (
+                            person,
+                            offset
+                        ) => ({
+                            person,
+                            index:
+                                index +
+                                offset,
+                        })
+                    );
+
 
             groups.push({
-                count,
                 people:
-                    people.slice(
-                        index,
-                        index + count
-                    ),
-                startIndex:
-                    index,
+                    groupPeople,
             });
 
-            index += count;
+
+            index +=
+                requestedCount;
         }
+
 
         return groups;
     };
@@ -598,28 +791,29 @@
     // CREATIVE CARD
     // ------------------------------------------------------------
 
-    const creativeCardContentHtml = person => {
+    const creativeCardContentHtml =
+        person => {
 
-        return `
-            <div class="htbb-creative__info">
+            return `
+                <div class="htbb-creative__info">
 
-                ${
-                    person.role
-                        ? `
-                            <div class="htbb-creative__role">
-                                ${esc(person.role)}
-                            </div>
-                        `
-                        : ''
-                }
+                    ${
+                        person.role
+                            ? `
+                                <div class="htbb-creative__role">
+                                    ${safeInlineHtml(person.role)}
+                                </div>
+                            `
+                            : ''
+                    }
 
-                <div class="htbb-creative__name">
-                    ${esc(person.name)}
+                    <h3 class="htbb-creative__name">
+                        ${safeInlineHtml(person.name)}
+                    </h3>
+
                 </div>
-
-            </div>
-        `;
-    };
+            `;
+        };
 
 
     const creativeCardHtml = (
@@ -632,12 +826,16 @@
                 person
             );
 
+
+        // Has bio = clickable.
         if (
             hasBio(person)
         ) {
 
             return `
-                <article class="htbb-creative__card htbb-creative__card--has-bio">
+                <article
+                    class="htbb-creative__card htbb-creative__card--has-bio"
+                >
 
                     <button
                         class="htbb-creative__button"
@@ -653,10 +851,15 @@
         }
 
 
+        // No bio = static.
         return `
-            <article class="htbb-creative__card htbb-creative__card--no-bio">
+            <article
+                class="htbb-creative__card htbb-creative__card--no-bio"
+            >
 
-                <div class="htbb-creative__button htbb-creative__button--static">
+                <div
+                    class="htbb-creative__button htbb-creative__button--static"
+                >
                     ${content}
                 </div>
 
@@ -669,50 +872,55 @@
     // RENDER CREATIVE
     // ------------------------------------------------------------
 
-    const renderCreative = container => {
+    const renderCreative =
+        container => {
 
-        const grid =
-            container.querySelector(
-                '.htbb-creative__grid'
-            );
+            const grid =
+                container.querySelector(
+                    '.htbb-creative__grid'
+                );
 
-        if (!grid) {
-            return;
-        }
 
-        const groups =
-            createGroups();
+            if (!grid) {
+                return;
+            }
 
-        grid.innerHTML =
-            groups
-                .map(group => {
 
-                    const cards =
-                        group.people
-                            .map(
-                                (
-                                    person,
-                                    offset
-                                ) =>
+            const groups =
+                createGroups();
+
+
+            grid.innerHTML =
+                groups
+                    .map(group => {
+
+                        const count =
+                            group.people.length;
+
+
+                        const cards =
+                            group.people
+                                .map(item =>
                                     creativeCardHtml(
-                                        person,
-                                        group.startIndex + offset
+                                        item.person,
+                                        item.index
                                     )
-                            )
-                            .join('');
+                                )
+                                .join('');
 
-                    return `
-                        <div
-                            class="htbb-creative__row"
-                            style="--creative-columns: ${group.count};"
-                        >
-                            ${cards}
-                        </div>
-                    `;
 
-                })
-                .join('');
-    };
+                        return `
+                            <div
+                                class="htbb-creative__row"
+                                style="--creative-columns: ${count};"
+                            >
+                                ${cards}
+                            </div>
+                        `;
+
+                    })
+                    .join('');
+        };
 
 
     // ------------------------------------------------------------
@@ -725,11 +933,15 @@
     ) => {
 
         const url =
-            normalizeUrl(value);
+            normalizeUrl(
+                value
+            );
+
 
         if (!url) {
             return '';
         }
+
 
         return `
             <a
@@ -743,117 +955,123 @@
     };
 
 
-    const socialsHtml = person => {
+    const socialsHtml =
+        person => {
 
-        const links = [
+            const links = [
 
-            socialLinkHtml(
-                'Instagram',
-                person.instagram
-            ),
+                socialLinkHtml(
+                    'Instagram',
+                    person.instagram
+                ),
 
-            socialLinkHtml(
-                'Facebook',
-                person.facebook
-            ),
+                socialLinkHtml(
+                    'Facebook',
+                    person.facebook
+                ),
 
-            socialLinkHtml(
-                'X',
-                person.twitter
-            ),
+                socialLinkHtml(
+                    'X',
+                    person.twitter
+                ),
 
-            socialLinkHtml(
-                'TikTok',
-                person.tiktok
-            ),
+                socialLinkHtml(
+                    'TikTok',
+                    person.tiktok
+                ),
 
-            socialLinkHtml(
-                'YouTube',
-                person.youtube
-            ),
+                socialLinkHtml(
+                    'YouTube',
+                    person.youtube
+                ),
 
-            socialLinkHtml(
-                'Website',
-                person.website
-            ),
+                socialLinkHtml(
+                    'Website',
+                    person.website
+                ),
 
-        ]
-            .filter(Boolean)
-            .join('');
+            ]
+                .filter(Boolean)
+                .join('');
 
-        if (!links) {
-            return '';
-        }
 
-        return `
-            <div class="htbb-creative-modal__socials">
-                ${links}
-            </div>
-        `;
-    };
+            if (!links) {
+                return '';
+            }
+
+
+            return `
+                <div class="htbb-creative-modal__socials">
+                    ${links}
+                </div>
+            `;
+        };
 
 
     // ------------------------------------------------------------
     // MODAL NAVIGATION
     // ------------------------------------------------------------
 
-    const modalNavigationHtml = index => {
+    const modalNavigationHtml =
+        index => {
 
-        const previousIndex =
-            getBioIndex(
-                index,
-                -1
-            );
+            const previousIndex =
+                getBioIndex(
+                    index,
+                    -1
+                );
 
-        const nextIndex =
-            getBioIndex(
-                index,
-                1
-            );
+            const nextIndex =
+                getBioIndex(
+                    index,
+                    1
+                );
 
-        if (
-            previousIndex === null &&
-            nextIndex === null
-        ) {
-            return '';
-        }
 
-        return `
-            <div class="htbb-creative-modal__nav">
+            if (
+                previousIndex === null &&
+                nextIndex === null
+            ) {
+                return '';
+            }
 
-                ${
-                    previousIndex !== null
-                        ? `
-                            <button
-                                class="htbb-creative-modal__arrow htbb-creative-modal__arrow--prev"
-                                type="button"
-                                data-creative-nav="prev"
-                                aria-label="Previous biography: ${esc(people[previousIndex].name)}"
-                            >
-                                <span aria-hidden="true">‹</span>
-                            </button>
-                        `
-                        : ''
-                }
 
-                ${
-                    nextIndex !== null
-                        ? `
-                            <button
-                                class="htbb-creative-modal__arrow htbb-creative-modal__arrow--next"
-                                type="button"
-                                data-creative-nav="next"
-                                aria-label="Next biography: ${esc(people[nextIndex].name)}"
-                            >
-                                <span aria-hidden="true">›</span>
-                            </button>
-                        `
-                        : ''
-                }
+            return `
+                <div class="htbb-creative-modal__nav">
 
-            </div>
-        `;
-    };
+                    ${
+                        previousIndex !== null
+                            ? `
+                                <button
+                                    class="htbb-creative-modal__arrow htbb-creative-modal__arrow--prev"
+                                    type="button"
+                                    data-creative-nav="prev"
+                                    aria-label="Previous biography: ${esc(people[previousIndex].name)}"
+                                >
+                                    <span aria-hidden="true">‹</span>
+                                </button>
+                            `
+                            : ''
+                    }
+
+                    ${
+                        nextIndex !== null
+                            ? `
+                                <button
+                                    class="htbb-creative-modal__arrow htbb-creative-modal__arrow--next"
+                                    type="button"
+                                    data-creative-nav="next"
+                                    aria-label="Next biography: ${esc(people[nextIndex].name)}"
+                                >
+                                    <span aria-hidden="true">›</span>
+                                </button>
+                            `
+                            : ''
+                    }
+
+                </div>
+            `;
+        };
 
 
     // ------------------------------------------------------------
@@ -870,22 +1088,22 @@
 
                 <div class="htbb-creative-modal__details">
 
-                    <h2
-                        id="htbb-creative-modal-name"
-                        class="htbb-creative-modal__name"
-                    >
-                        ${esc(person.name)}
-                    </h2>
-
                     ${
                         person.role
                             ? `
                                 <div class="htbb-creative-modal__role">
-                                    ${esc(person.role)}
+                                    ${safeInlineHtml(person.role)}
                                 </div>
                             `
                             : ''
                     }
+
+                    <h2
+                        id="htbb-creative-modal-name"
+                        class="htbb-creative-modal__name"
+                    >
+                        ${safeInlineHtml(person.name)}
+                    </h2>
 
                     <div class="htbb-creative-modal__bio"></div>
 
@@ -914,6 +1132,7 @@
                 '.htbb-creative-modal__bio'
             );
 
+
         if (
             !target ||
             !hasBio(person)
@@ -921,26 +1140,37 @@
             return;
         }
 
+
         const raw =
             String(
                 person.bio
             ).trim();
 
+
         const docMatch =
-            raw.match(DOC_URL);
+            raw.match(
+                DOC_URL
+            );
 
 
-        if (!docMatch) {
+        // Bio directly in Sheet.
+        if (
+            !docMatch
+        ) {
 
             target.innerHTML =
-                richText(raw);
+                richText(
+                    raw
+                );
 
             return;
         }
 
 
+        // Google Doc bio.
         target.innerHTML =
             '<p class="htbb-creative-modal__bio-loading">Loading…</p>';
+
 
         try {
 
@@ -949,12 +1179,14 @@
                     docMatch[1]
                 );
 
+
             if (
                 modal.dataset.creativeIndex !==
                 String(activeIndex)
             ) {
                 return;
             }
+
 
             target.innerHTML =
                 html || '';
@@ -966,7 +1198,9 @@
                 error
             );
 
-            target.innerHTML = '';
+
+            target.innerHTML =
+                '';
         }
     };
 
@@ -975,53 +1209,63 @@
     // DISPLAY MODAL PERSON
     // ------------------------------------------------------------
 
-    const displayModalPerson = index => {
+    const displayModalPerson =
+        index => {
 
-        const modal =
-            document.querySelector(
-                '#htbb-creative-modal'
-            );
+            const modal =
+                document.querySelector(
+                    '#htbb-creative-modal'
+                );
 
-        if (!modal) {
-            return;
-        }
 
-        const person =
-            people[index];
+            if (!modal) {
+                return;
+            }
 
-        if (
-            !person ||
-            !hasBio(person)
-        ) {
-            return;
-        }
 
-        const content =
-            modal.querySelector(
-                '.htbb-creative-modal__content'
-            );
+            const person =
+                people[index];
 
-        if (!content) {
-            return;
-        }
 
-        activeIndex =
-            index;
+            if (
+                !person ||
+                !hasBio(person)
+            ) {
+                return;
+            }
 
-        modal.dataset.creativeIndex =
-            String(index);
 
-        content.innerHTML =
-            modalHtml(
+            const content =
+                modal.querySelector(
+                    '.htbb-creative-modal__content'
+                );
+
+
+            if (!content) {
+                return;
+            }
+
+
+            activeIndex =
+                index;
+
+
+            modal.dataset.creativeIndex =
+                String(index);
+
+
+            content.innerHTML =
+                modalHtml(
+                    person,
+                    index
+                );
+
+
+            loadBio(
                 person,
-                index
+                modal
             );
-
-        loadBio(
-            person,
-            modal
-        );
-    };
+        };
 
 
     // ------------------------------------------------------------
@@ -1038,12 +1282,15 @@
                 '#htbb-creative-modal'
             );
 
+
         if (!modal) {
             return;
         }
 
+
         const person =
             people[index];
+
 
         if (
             !person ||
@@ -1052,36 +1299,47 @@
             return;
         }
 
+
         lastFocusedElement =
             trigger || null;
+
 
         displayModalPerson(
             index
         );
 
+
         modal.classList.add(
             'is-open'
         );
+
 
         modal.setAttribute(
             'aria-hidden',
             'false'
         );
 
+
         document.body.classList.add(
             'htbb-creative-modal-open'
         );
+
 
         const closeButton =
             modal.querySelector(
                 '.htbb-creative-modal__close'
             );
 
+
         if (closeButton) {
 
-            requestAnimationFrame(() => {
-                closeButton.focus();
-            });
+            requestAnimationFrame(
+                () => {
+
+                    closeButton.focus();
+
+                }
+            );
         }
     };
 
@@ -1090,30 +1348,35 @@
     // NAVIGATE MODAL
     // ------------------------------------------------------------
 
-    const navigateModal = direction => {
+    const navigateModal =
+        direction => {
 
-        if (
-            activeIndex === null
-        ) {
-            return;
-        }
+            if (
+                activeIndex === null
+            ) {
+                return;
+            }
 
-        const newIndex =
-            getBioIndex(
-                activeIndex,
-                direction
+
+            const newIndex =
+                getBioIndex(
+                    activeIndex,
+                    direction
+                );
+
+
+            // Beginning/end reached.
+            if (
+                newIndex === null
+            ) {
+                return;
+            }
+
+
+            displayModalPerson(
+                newIndex
             );
-
-        if (
-            newIndex === null
-        ) {
-            return;
-        }
-
-        displayModalPerson(
-            newIndex
-        );
-    };
+        };
 
 
     // ------------------------------------------------------------
@@ -1127,26 +1390,34 @@
                 '#htbb-creative-modal'
             );
 
+
         if (!modal) {
             return;
         }
 
+
         modal.classList.remove(
             'is-open'
         );
+
 
         modal.setAttribute(
             'aria-hidden',
             'true'
         );
 
+
         document.body.classList.remove(
             'htbb-creative-modal-open'
         );
 
+
         delete modal.dataset.creativeIndex;
 
-        activeIndex = null;
+
+        activeIndex =
+            null;
+
 
         if (
             lastFocusedElement &&
@@ -1154,10 +1425,13 @@
                 lastFocusedElement
             )
         ) {
+
             lastFocusedElement.focus();
         }
 
-        lastFocusedElement = null;
+
+        lastFocusedElement =
+            null;
     };
 
 
@@ -1165,203 +1439,257 @@
     // EVENTS
     // ------------------------------------------------------------
 
-    const bindEvents = container => {
+    const bindEvents =
+        container => {
 
-        const modal =
-            document.querySelector(
-                '#htbb-creative-modal'
+            const modal =
+                document.querySelector(
+                    '#htbb-creative-modal'
+                );
+
+
+            if (!modal) {
+                return;
+            }
+
+
+            // Creative card.
+            container.addEventListener(
+                'click',
+                event => {
+
+                    const button =
+                        event.target.closest(
+                            '[data-creative-index]'
+                        );
+
+
+                    if (!button) {
+                        return;
+                    }
+
+
+                    const index =
+                        Number(
+                            button.dataset
+                                .creativeIndex
+                        );
+
+
+                    if (
+                        !Number.isInteger(
+                            index
+                        )
+                    ) {
+                        return;
+                    }
+
+
+                    openModal(
+                        index,
+                        button
+                    );
+                }
             );
 
-        if (!modal) {
-            return;
-        }
+
+            // Modal controls.
+            modal.addEventListener(
+                'click',
+                event => {
 
 
-        container.addEventListener(
-            'click',
-            event => {
+                    // Close.
+                    if (
+                        event.target.closest(
+                            '.htbb-creative-modal__close'
+                        )
+                    ) {
 
-                const button =
-                    event.target.closest(
-                        '[data-creative-index]'
-                    );
+                        closeModal();
 
-                if (!button) {
-                    return;
+                        return;
+                    }
+
+
+                    // Previous.
+                    if (
+                        event.target.closest(
+                            '[data-creative-nav="prev"]'
+                        )
+                    ) {
+
+                        navigateModal(
+                            -1
+                        );
+
+                        return;
+                    }
+
+
+                    // Next.
+                    if (
+                        event.target.closest(
+                            '[data-creative-nav="next"]'
+                        )
+                    ) {
+
+                        navigateModal(
+                            1
+                        );
+
+                        return;
+                    }
+
+
+                    // Overlay.
+                    if (
+                        event.target.classList.contains(
+                            'htbb-creative-modal__overlay'
+                        )
+                    ) {
+
+                        closeModal();
+                    }
                 }
+            );
 
-                const index =
-                    Number(
-                        button.dataset.creativeIndex
-                    );
 
-                if (
-                    !Number.isInteger(index)
-                ) {
-                    return;
+            // Keyboard.
+            document.addEventListener(
+                'keydown',
+                event => {
+
+                    if (
+                        !modal.classList.contains(
+                            'is-open'
+                        )
+                    ) {
+                        return;
+                    }
+
+
+                    if (
+                        event.key ===
+                        'Escape'
+                    ) {
+
+                        closeModal();
+
+                        return;
+                    }
+
+
+                    if (
+                        event.key ===
+                        'ArrowLeft'
+                    ) {
+
+                        event.preventDefault();
+
+                        navigateModal(
+                            -1
+                        );
+
+                        return;
+                    }
+
+
+                    if (
+                        event.key ===
+                        'ArrowRight'
+                    ) {
+
+                        event.preventDefault();
+
+                        navigateModal(
+                            1
+                        );
+                    }
                 }
-
-                openModal(
-                    index,
-                    button
-                );
-            }
-        );
-
-
-        modal.addEventListener(
-            'click',
-            event => {
-
-                if (
-                    event.target.closest(
-                        '.htbb-creative-modal__close'
-                    )
-                ) {
-                    closeModal();
-                    return;
-                }
-
-
-                if (
-                    event.target.closest(
-                        '[data-creative-nav="prev"]'
-                    )
-                ) {
-                    navigateModal(-1);
-                    return;
-                }
-
-
-                if (
-                    event.target.closest(
-                        '[data-creative-nav="next"]'
-                    )
-                ) {
-                    navigateModal(1);
-                    return;
-                }
-
-
-                if (
-                    event.target.classList.contains(
-                        'htbb-creative-modal__overlay'
-                    )
-                ) {
-                    closeModal();
-                }
-            }
-        );
-
-
-        document.addEventListener(
-            'keydown',
-            event => {
-
-                if (
-                    !modal.classList.contains(
-                        'is-open'
-                    )
-                ) {
-                    return;
-                }
-
-
-                if (
-                    event.key === 'Escape'
-                ) {
-                    closeModal();
-                    return;
-                }
-
-
-                if (
-                    event.key === 'ArrowLeft'
-                ) {
-                    event.preventDefault();
-                    navigateModal(-1);
-                    return;
-                }
-
-
-                if (
-                    event.key === 'ArrowRight'
-                ) {
-                    event.preventDefault();
-                    navigateModal(1);
-                }
-            }
-        );
-    };
+            );
+        };
 
 
     // ------------------------------------------------------------
     // INIT
     // ------------------------------------------------------------
 
-    const init = async () => {
+    const init =
+        async () => {
 
-        const container =
-            document.querySelector(
-                '#htbb-creative'
+            const container =
+                document.querySelector(
+                    '#htbb-creative'
+                );
+
+
+            if (!container) {
+                return;
+            }
+
+
+            container.setAttribute(
+                'aria-busy',
+                'true'
             );
 
-        if (!container) {
-            return;
-        }
 
-        container.setAttribute(
-            'aria-busy',
-            'true'
-        );
+            try {
 
-        try {
+                people =
+                    await getCreative();
 
-            people =
-                await getCreative();
 
-            console.log(
-                `${MODULE} Loaded ${people.length} creative team member(s).`,
-                people
-            );
+                console.log(
+                    `${MODULE} Loaded ${people.length} creative member(s).`,
+                    people
+                );
 
-            if (!people.length) {
+
+                if (
+                    !people.length
+                ) {
+
+                    container.hidden =
+                        true;
+
+                    return;
+                }
+
+
+                renderCreative(
+                    container
+                );
+
+
+                bindEvents(
+                    container
+                );
+
+            } catch (error) {
+
+                console.error(
+                    `${MODULE} Unable to load creative team.`,
+                    error
+                );
+
 
                 container.hidden =
                     true;
 
-                return;
+            } finally {
+
+                container.removeAttribute(
+                    'aria-busy'
+                );
+
+
+                container.classList.remove(
+                    'is-loading'
+                );
             }
-
-            renderCreative(
-                container
-            );
-
-            bindEvents(
-                container
-            );
-
-        } catch (error) {
-
-            console.error(
-                `${MODULE} Unable to load creative team.`,
-                error
-            );
-
-            container.hidden =
-                true;
-
-        } finally {
-
-            container.removeAttribute(
-                'aria-busy'
-            );
-
-            container.classList.remove(
-                'is-loading'
-            );
-        }
-    };
+        };
 
 
     // ------------------------------------------------------------
