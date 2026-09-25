@@ -172,7 +172,7 @@
 
     if (quote.author) {
       authorElement.innerHTML =
-        `— ${richText(quote.author)}`;
+        `${richText(quote.author)}`;
     } else {
       authorElement.innerHTML = '';
     }
