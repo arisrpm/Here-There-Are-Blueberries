@@ -1,0 +1,364 @@
+/* ==========================================================
+   HTBB — CAST
+   ========================================================== */
+
+.htbb-cast {
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 60px 25px;
+}
+
+
+/* ----------------------------------------------------------
+   GRID
+   ---------------------------------------------------------- */
+
+.htbb-cast__grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 45px 40px;
+}
+
+
+/* ----------------------------------------------------------
+   CAST CARD
+   ---------------------------------------------------------- */
+
+.htbb-cast__card {
+    min-width: 0;
+    margin: 0;
+}
+
+.htbb-cast__button {
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: inherit;
+    text-align: inherit;
+    cursor: pointer;
+}
+
+
+/* ----------------------------------------------------------
+   IMAGE
+   ---------------------------------------------------------- */
+
+.htbb-cast__image-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4 / 5;
+    overflow: hidden;
+    background: #ddd;
+}
+
+.htbb-cast__image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+
+    transition:
+        transform 0.35s ease,
+        opacity 0.35s ease;
+}
+
+.htbb-cast__button:hover .htbb-cast__image {
+    transform: scale(1.025);
+}
+
+
+/* ----------------------------------------------------------
+   CARD TEXT
+   ---------------------------------------------------------- */
+
+.htbb-cast__info {
+    padding: 10px 8px 12px;
+    background: #000;
+    color: #fff;
+    text-align: center;
+}
+
+.htbb-cast__name {
+    margin: 0;
+    color: #fff;
+    font-family: "avenir next", sans-serif !important;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.1;
+    text-transform: uppercase;
+}
+
+.htbb-cast__role {
+    margin: 3px 0 0;
+    color: #fff;
+    font-family: "avenir next", sans-serif !important;
+    font-size: 16px;
+    font-style: italic;
+    font-weight: 400;
+    line-height: 1.1;
+    text-transform: uppercase;
+}
+
+
+/* ==========================================================
+   MODAL
+   ========================================================== */
+
+.htbb-cast-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 40px;
+
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+
+    transition:
+        opacity 0.3s ease,
+        visibility 0.3s ease;
+}
+
+.htbb-cast-modal.is-open {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.htbb-cast-modal__overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.8);
+}
+
+.htbb-cast-modal__dialog {
+    position: relative;
+    z-index: 1;
+
+    width: 100%;
+    max-width: 1100px;
+    max-height: calc(100dvh - 80px);
+
+    overflow-y: auto;
+
+    background: #eae9e1;
+}
+
+
+/* ----------------------------------------------------------
+   MODAL CONTENT
+   ---------------------------------------------------------- */
+
+.htbb-cast-modal__inner {
+    display: grid;
+    grid-template-columns: minmax(250px, 35%) 1fr;
+    gap: 50px;
+
+    padding: 60px;
+}
+
+.htbb-cast-modal__photo {
+    width: 100%;
+}
+
+.htbb-cast-modal__photo img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.htbb-cast-modal__name {
+    margin: 0;
+    color: #333f48;
+    font-family: "alternate-gothic-condensed-a", sans-serif !important;
+    font-size: 48px;
+    font-weight: 600;
+    line-height: 1;
+    text-transform: uppercase;
+}
+
+.htbb-cast-modal__role {
+    margin: 5px 0 25px;
+    color: #333f48;
+    font-family: "century-gothic", sans-serif !important;
+    font-size: 18px;
+    font-style: italic;
+    text-transform: uppercase;
+}
+
+.htbb-cast-modal__bio,
+.htbb-cast-modal__bio p {
+    color: #333f48;
+    font-family: "century-gothic", sans-serif !important;
+    font-size: 17px;
+    line-height: 1.6;
+}
+
+.htbb-cast-modal__bio p:first-child {
+    margin-top: 0;
+}
+
+.htbb-cast-modal__bio p:last-child {
+    margin-bottom: 0;
+}
+
+
+/* ----------------------------------------------------------
+   SOCIALS
+   ---------------------------------------------------------- */
+
+.htbb-cast-modal__socials {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+
+    margin-top: 30px;
+}
+
+.htbb-cast-modal__socials a {
+    color: #333f48;
+    font-family: "avenir next", sans-serif !important;
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: underline;
+    text-transform: uppercase;
+}
+
+
+/* ----------------------------------------------------------
+   CLOSE
+   ---------------------------------------------------------- */
+
+.htbb-cast-modal__close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 2;
+
+    width: 40px;
+    height: 40px;
+
+    margin: 0;
+    padding: 0;
+
+    border: 0;
+    background: transparent;
+
+    cursor: pointer;
+}
+
+.htbb-cast-modal__close span {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+
+    width: 30px;
+    height: 2px;
+
+    background: #333f48;
+}
+
+.htbb-cast-modal__close span:first-child {
+    transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.htbb-cast-modal__close span:last-child {
+    transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+
+/* ----------------------------------------------------------
+   BODY LOCK
+   ---------------------------------------------------------- */
+
+body.htbb-cast-modal-open {
+    overflow: hidden;
+}
+
+
+/* ==========================================================
+   TABLET
+   ========================================================== */
+
+@media (max-width: 900px) {
+
+    .htbb-cast__grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 40px 25px;
+    }
+
+    .htbb-cast-modal__inner {
+        gap: 35px;
+        padding: 50px 40px;
+    }
+}
+
+
+/* ==========================================================
+   MOBILE
+   ========================================================== */
+
+@media (max-width: 600px) {
+
+    .htbb-cast {
+        padding: 40px 20px;
+    }
+
+    .htbb-cast__grid {
+        gap: 25px 15px;
+    }
+
+    .htbb-cast__name {
+        font-size: 15px;
+    }
+
+    .htbb-cast__role {
+        font-size: 13px;
+    }
+
+    .htbb-cast-modal {
+        padding: 15px;
+    }
+
+    .htbb-cast-modal__dialog {
+        max-height: calc(100dvh - 30px);
+    }
+
+    .htbb-cast-modal__inner {
+        grid-template-columns: 1fr;
+        gap: 25px;
+        padding: 55px 25px 35px;
+    }
+
+    .htbb-cast-modal__photo {
+        max-width: 300px;
+        margin: 0 auto;
+    }
+
+    .htbb-cast-modal__name {
+        font-size: 38px;
+    }
+}
+
+
+/* ==========================================================
+   REDUCED MOTION
+   ========================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+
+    .htbb-cast__image,
+    .htbb-cast-modal {
+        transition: none;
+    }
+}
