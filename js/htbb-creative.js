@@ -223,7 +223,7 @@
         return (
             `${safeInlineHtml(first)}` +
             `<br>` +
-            `${safeInlineHtml(last)}`
+            `<span class="htbb-creative__last-name">${safeInlineHtml(last)}</span>`
         );
     };
 

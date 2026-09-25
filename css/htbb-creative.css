@@ -89,6 +89,19 @@ button.htbb-creative__button {
     font-family: 'avenir next' !important;
 }
 
+.htbb-creative__name span {
+    font-weight: 400;
+}
+
+
+/* One-person row: first + last name on same line */
+.htbb-creative__row[style*="--creative-columns: 1"] .htbb-creative__name br {
+    display: none;
+}
+
+.htbb-creative__row[style*="--creative-columns: 1"] .htbb-creative__last-name::before {
+    content: " ";
+}
 
 /* Bio indication */
 
