@@ -323,15 +323,15 @@
    ---------------------------------------------------------- */
 
 .htbb-cast-modal__close {
-    position: absolute;
-    top: 20px;
-    right: 20px;
+    position: relative;
+    top: 10px;
+    right: 10px;
     z-index: 2;
-
+    display: block;
     width: 40px;
     height: 40px;
 
-    margin: 0;
+    margin-left: auto;
     padding: 0;
 
     border: 0;
