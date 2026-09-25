@@ -824,7 +824,6 @@
 
     const modalNavigationHtml = index => {
 
-        // Don't show navigation if there is only one bio.
         if (
             getBioCount() <= 1
         ) {
@@ -843,39 +842,38 @@
                 1
             );
 
-        if (
-            previousIndex === null ||
-            nextIndex === null
-        ) {
-            return '';
-        }
-
-        const previousPerson =
-            people[previousIndex];
-
-        const nextPerson =
-            people[nextIndex];
-
         return `
             <div class="htbb-cast-modal__nav">
 
-                <button
-                    class="htbb-cast-modal__arrow htbb-cast-modal__arrow--prev"
-                    type="button"
-                    data-cast-nav="prev"
-                    aria-label="Previous biography: ${esc(previousPerson.name)}"
-                >
-                    <span aria-hidden="true">‹</span>
-                </button>
+                ${
+                    previousIndex !== null
+                        ? `
+                            <button
+                                class="htbb-cast-modal__arrow htbb-cast-modal__arrow--prev"
+                                type="button"
+                                data-cast-nav="prev"
+                                aria-label="Previous biography: ${esc(people[previousIndex].name)}"
+                            >
+                                <span aria-hidden="true">‹</span>
+                            </button>
+                        `
+                        : ''
+                }
 
-                <button
-                    class="htbb-cast-modal__arrow htbb-cast-modal__arrow--next"
-                    type="button"
-                    data-cast-nav="next"
-                    aria-label="Next biography: ${esc(nextPerson.name)}"
-                >
-                    <span aria-hidden="true">›</span>
-                </button>
+                ${
+                    nextIndex !== null
+                        ? `
+                            <button
+                                class="htbb-cast-modal__arrow htbb-cast-modal__arrow--next"
+                                type="button"
+                                data-cast-nav="next"
+                                aria-label="Next biography: ${esc(people[nextIndex].name)}"
+                            >
+                                <span aria-hidden="true">›</span>
+                            </button>
+                        `
+                        : ''
+                }
 
             </div>
         `;
