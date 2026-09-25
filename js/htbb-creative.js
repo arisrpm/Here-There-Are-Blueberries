@@ -42,7 +42,8 @@
         /docs\.google\.com\/document\/d\/(?:e\/)?([\w-]{16,})/;
 
     const INLINE_TAGS =
-        /&lt;(\/?(?:em|strong|i|b|br)\s*\/?)&gt;/gi;
+    /&lt;(\/?(?:em|strong|i|b|br|span)\s*\/?)&gt;/gi;
+        
 
     const bioCache =
         new Map();
@@ -91,6 +92,139 @@
                 INLINE_TAGS,
                 '<$1>'
             );
+    };
+
+
+    /**
+     * Format a person's name onto two lines.
+     *
+     * Examples:
+     *
+     * MOISÉS KAUFMAN
+     *
+     * becomes:
+     *
+     * MOISÉS
+     * KAUFMAN
+     *
+     *
+     * MARY JANE SMITH
+     *
+     * becomes:
+     *
+     * MARY JANE
+     * SMITH
+     *
+     *
+     * If the client manually enters <br>,
+     * preserve their formatting instead.
+     */
+
+    const formatName = value => {
+
+        const raw =
+            String(value || '')
+                .trim();
+
+        if (!raw) {
+            return '';
+        }
+
+
+        // Client supplied their own line break.
+        if (
+            /<br\s*\/?>/i.test(raw)
+        ) {
+
+            return safeInlineHtml(
+                raw
+            );
+        }
+
+
+        /**
+         * Strip approved formatting tags temporarily
+         * when determining where the final space is.
+         *
+         * For simple names this lets us split the
+         * last word onto its own line.
+         */
+
+        const plain =
+            raw
+                .replace(
+                    /<\/?(?:em|strong|i|b|span)>/gi,
+                    ''
+                )
+                .trim();
+
+
+        const lastSpace =
+            plain.lastIndexOf(' ');
+
+
+        // Single-word name.
+        if (
+            lastSpace === -1
+        ) {
+
+            return safeInlineHtml(
+                raw
+            );
+        }
+
+
+        /**
+         * If HTML formatting is present, don't try
+         * to split through the markup automatically.
+         *
+         * The client can use <br> explicitly for
+         * special formatted names.
+         */
+
+        if (
+            /<\/?(?:em|strong|i|b|span)>/i.test(raw)
+        ) {
+
+            return safeInlineHtml(
+                raw
+            );
+        }
+
+
+        const first =
+            plain
+                .slice(
+                    0,
+                    lastSpace
+                )
+                .trim();
+
+
+        const last =
+            plain
+                .slice(
+                    lastSpace + 1
+                )
+                .trim();
+
+
+        if (
+            !first ||
+            !last
+        ) {
+
+            return safeInlineHtml(
+                raw
+            );
+        }
+
+
+        return (
+            `${safeInlineHtml(first)}` +
+            `<br>` +
+            `${safeInlineHtml(last)}`
+        );
     };
 
 
@@ -456,7 +590,6 @@
             );
 
 
-        // Links.
         if (
             node.tagName === 'A'
         ) {
@@ -712,28 +845,6 @@
     // CREATE ROW GROUPS
     // ------------------------------------------------------------
 
-    /**
-     * PER ROW controls how many people
-     * begin with the current record.
-     *
-     * Example:
-     *
-     * One
-     * One
-     * Two
-     * Two
-     * Three
-     * Three
-     * Three
-     *
-     * becomes:
-     *
-     * [1]
-     * [1]
-     * [2 people]
-     * [3 people]
-     */
-
     const createGroups = () => {
 
         const groups = [];
@@ -808,7 +919,7 @@
                     }
 
                     <h3 class="htbb-creative__name">
-                        ${safeInlineHtml(person.name)}
+                        ${formatName(person.name)}
                     </h3>
 
                 </div>
@@ -827,7 +938,6 @@
             );
 
 
-        // Has bio = clickable.
         if (
             hasBio(person)
         ) {
@@ -851,7 +961,6 @@
         }
 
 
-        // No bio = static.
         return `
             <article
                 class="htbb-creative__card htbb-creative__card--no-bio"
@@ -1102,7 +1211,7 @@
                         id="htbb-creative-modal-name"
                         class="htbb-creative-modal__name"
                     >
-                        ${safeInlineHtml(person.name)}
+                        ${formatName(person.name)}
                     </h2>
 
                     <div class="htbb-creative-modal__bio"></div>
@@ -1153,7 +1262,6 @@
             );
 
 
-        // Bio directly in Sheet.
         if (
             !docMatch
         ) {
@@ -1167,7 +1275,6 @@
         }
 
 
-        // Google Doc bio.
         target.innerHTML =
             '<p class="htbb-creative-modal__bio-loading">Loading…</p>';
 
@@ -1365,7 +1472,6 @@
                 );
 
 
-            // Beginning/end reached.
             if (
                 newIndex === null
             ) {

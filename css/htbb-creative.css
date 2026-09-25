@@ -3,7 +3,10 @@
    ============================================================ */
 
 .htbb-creative {
-    width: 100%;
+    width: 1350px;
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .htbb-creative__grid {
@@ -22,6 +25,11 @@
     gap: 28px 36px;
     width: 100%;
     margin-inline: auto;
+}
+
+.htbb-creative__info {
+    font-family: 'avenir next' !important;
+    color: #333f48;
 }
 
 
@@ -66,6 +74,8 @@ button.htbb-creative__button {
     line-height: 1;
     letter-spacing: 0.04em;
     text-transform: uppercase;
+    color: #333f48;
+    font-family: 'avenir next' !important;
 }
 
 .htbb-creative__name {
@@ -75,6 +85,8 @@ button.htbb-creative__button {
     line-height: 0.95;
     letter-spacing: 0.02em;
     text-transform: uppercase;
+    color: #333f48;
+    font-family: 'avenir next' !important;
 }
 
 
