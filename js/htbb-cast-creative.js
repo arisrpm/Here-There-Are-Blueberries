@@ -116,7 +116,7 @@
      *  1 = next
      * -1 = previous
      *
-     * Navigation wraps around.
+     * Navigation stops at the first/last available bio.
      */
     const getBioIndex = (
         currentIndex,
@@ -128,27 +128,20 @@
         }
 
         let index =
-            currentIndex;
+            currentIndex + direction;
 
-        for (
-            let count = 0;
-            count < people.length;
-            count++
+        while (
+            index >= 0 &&
+            index < people.length
         ) {
 
-            index =
-                (
-                    index +
-                    direction +
-                    people.length
-                ) % people.length;
-
             if (
-                index !== currentIndex &&
                 hasBio(people[index])
             ) {
                 return index;
             }
+
+            index += direction;
         }
 
         return null;
@@ -161,7 +154,6 @@
             hasBio
         ).length;
     };
-
 
     // ------------------------------------------------------------
     // GOOGLE DRIVE IMAGES
