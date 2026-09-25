@@ -1,0 +1,307 @@
+/* ============================================================
+   HTBB — CREATIVE
+   ============================================================ */
+
+.htbb-creative {
+    width: 100%;
+}
+
+.htbb-creative__grid {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+}
+
+.htbb-creative__row {
+    display: grid;
+    grid-template-columns:
+        repeat(
+            var(--creative-columns),
+            minmax(0, 1fr)
+        );
+    gap: 28px 36px;
+    width: 100%;
+    margin-inline: auto;
+}
+
+
+/* ------------------------------------------------------------
+   CARD
+   ------------------------------------------------------------ */
+
+.htbb-creative__card {
+    min-width: 0;
+    text-align: center;
+}
+
+.htbb-creative__button {
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: center;
+}
+
+button.htbb-creative__button {
+    cursor: pointer;
+}
+
+.htbb-creative__button--static {
+    cursor: default;
+}
+
+
+/* ------------------------------------------------------------
+   ROLE / NAME
+   ------------------------------------------------------------ */
+
+.htbb-creative__role {
+    margin: 0 0 2px;
+    font-size: clamp(18px, 2vw, 26px);
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.htbb-creative__name {
+    margin: 0;
+    font-size: clamp(20px, 2.2vw, 28px);
+    font-weight: 700;
+    line-height: 0.95;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
+
+/* Bio indication */
+
+.htbb-creative__card--has-bio .htbb-creative__button {
+    transition:
+        opacity 0.2s ease,
+        transform 0.2s ease;
+}
+
+.htbb-creative__card--has-bio .htbb-creative__button:hover {
+    opacity: 0.65;
+}
+
+.htbb-creative__card--has-bio .htbb-creative__button:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 8px;
+}
+
+
+/* ============================================================
+   MODAL
+   ============================================================ */
+
+.htbb-creative-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    display: none;
+}
+
+.htbb-creative-modal.is-open {
+    display: block;
+}
+
+.htbb-creative-modal__overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+}
+
+.htbb-creative-modal__dialog {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: min(900px, calc(100% - 40px));
+    max-height: calc(100vh - 60px);
+    overflow-y: auto;
+    transform: translate(-50%, -50%);
+    background: #f1efe5;
+    padding: 60px;
+}
+
+body.htbb-creative-modal-open {
+    overflow: hidden;
+}
+
+
+/* ------------------------------------------------------------
+   CLOSE
+   ------------------------------------------------------------ */
+
+.htbb-creative-modal__close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 3;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+}
+
+.htbb-creative-modal__close span {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 28px;
+    height: 2px;
+    background: currentColor;
+}
+
+.htbb-creative-modal__close span:first-child {
+    transform:
+        translate(-50%, -50%)
+        rotate(45deg);
+}
+
+.htbb-creative-modal__close span:last-child {
+    transform:
+        translate(-50%, -50%)
+        rotate(-45deg);
+}
+
+
+/* ------------------------------------------------------------
+   MODAL CONTENT
+   ------------------------------------------------------------ */
+
+.htbb-creative-modal__details {
+    max-width: 720px;
+    margin-inline: auto;
+}
+
+.htbb-creative-modal__name {
+    margin: 0;
+    font-size: clamp(30px, 4vw, 48px);
+    line-height: 1;
+    text-transform: uppercase;
+}
+
+.htbb-creative-modal__role {
+    margin-top: 8px;
+    font-size: 20px;
+    text-transform: uppercase;
+}
+
+.htbb-creative-modal__bio {
+    margin-top: 30px;
+}
+
+.htbb-creative-modal__bio p {
+    margin:
+        0
+        0
+        1em;
+}
+
+.htbb-creative-modal__bio p:last-child {
+    margin-bottom: 0;
+}
+
+
+/* ------------------------------------------------------------
+   SOCIALS
+   ------------------------------------------------------------ */
+
+.htbb-creative-modal__socials {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 20px;
+    margin-top: 30px;
+}
+
+
+/* ------------------------------------------------------------
+   MODAL ARROWS
+   ------------------------------------------------------------ */
+
+.htbb-creative-modal__nav {
+    pointer-events: none;
+}
+
+.htbb-creative-modal__arrow {
+    position: fixed;
+    top: 50%;
+    z-index: 4;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 52px;
+    height: 70px;
+    padding: 0;
+
+    border: 0;
+    background: none;
+
+    font-size: 60px;
+    font-family: Arial, sans-serif;
+    font-weight: 300;
+    line-height: 1;
+
+    cursor: pointer;
+    pointer-events: auto;
+
+    transform: translateY(-50%);
+}
+
+.htbb-creative-modal__arrow--prev {
+    left: 10px;
+}
+
+.htbb-creative-modal__arrow--next {
+    right: 10px;
+}
+
+
+/* ============================================================
+   MOBILE
+   ============================================================ */
+
+@media (max-width: 767px) {
+
+    .htbb-creative__grid {
+        gap: 24px;
+    }
+
+    /*
+     * Don't try to preserve 4-across rows on mobile.
+     * Every configured row becomes two columns.
+     */
+    .htbb-creative__row {
+        grid-template-columns:
+            repeat(
+                min(2, var(--creative-columns)),
+                minmax(0, 1fr)
+            );
+        gap: 24px 16px;
+    }
+
+    .htbb-creative-modal__dialog {
+        width: calc(100% - 24px);
+        max-height: calc(100vh - 24px);
+        padding:
+            55px
+            30px
+            40px;
+    }
+
+    .htbb-creative-modal__arrow {
+        width: 34px;
+        font-size: 46px;
+    }
+
+}
