@@ -142,7 +142,7 @@
 }
 
 .htbb-cast-modal__dialog {
-    position: relative;
+    /* position: relative; */
     z-index: 1;
 
     width: 100%;
@@ -210,6 +210,89 @@
 
 .htbb-cast-modal__bio p:last-child {
     margin-bottom: 0;
+}
+
+/* ==========================================================
+   CAST MODAL — PREVIOUS / NEXT
+   ========================================================== */
+
+.htbb-cast-modal__nav {
+    pointer-events: none;
+}
+
+.htbb-cast-modal__arrow {
+    position: absolute;
+    top: 50%;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 54px;
+    height: 54px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #FAC946;
+    cursor: pointer;
+    transform: translateY(-50%);
+    transition:
+        opacity 0.2s ease,
+        transform 0.2s ease;
+    pointer-events: auto;
+}
+
+.htbb-cast-modal__arrow span {
+    display: block;
+    font-family: Arial, sans-serif;
+    font-size: 64px;
+    font-weight: 300;
+    line-height: 1;
+}
+
+.htbb-cast-modal__arrow--prev {
+    left: 20px;
+}
+
+.htbb-cast-modal__arrow--next {
+    right: 20px;
+}
+
+.htbb-cast-modal__arrow:hover,
+.htbb-cast-modal__arrow:focus-visible {
+    opacity: 0.7;
+}
+
+.htbb-cast-modal__arrow--prev:hover {
+    transform: translate(-4px, -50%);
+}
+
+.htbb-cast-modal__arrow--next:hover {
+    transform: translate(4px, -50%);
+}
+
+
+/* ==========================================================
+   CAST MODAL ARROWS — MOBILE
+   ========================================================== */
+
+@media (max-width: 760px) {
+
+    .htbb-cast-modal__arrow {
+        width: 40px;
+        height: 50px;
+    }
+
+    .htbb-cast-modal__arrow span {
+        font-size: 48px;
+    }
+
+    .htbb-cast-modal__arrow--prev {
+        left: 5px;
+    }
+
+    .htbb-cast-modal__arrow--next {
+        right: 5px;
+    }
 }
 
 
