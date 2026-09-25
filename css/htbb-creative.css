@@ -7,6 +7,7 @@
     max-width: 100%;
     margin-left: auto;
     margin-right: auto;
+    padding-bottom: 2em;
 }
 
 .htbb-creative__grid {
@@ -69,7 +70,7 @@ button.htbb-creative__button {
 
 .htbb-creative__role {
     margin: 0 0 2px;
-    font-size: clamp(18px, 2vw, 26px);
+    font-size: clamp(26px, 2vw, 34px);
     font-weight: 400;
     line-height: 1;
     letter-spacing: 0.04em;
@@ -80,7 +81,7 @@ button.htbb-creative__button {
 
 .htbb-creative__name {
     margin: 0;
-    font-size: clamp(20px, 2.2vw, 28px);
+    font-size: clamp(28px, 2.2vw, 36px);
     font-weight: 700;
     line-height: 0.95;
     letter-spacing: 0.02em;
@@ -91,6 +92,10 @@ button.htbb-creative__button {
 
 .htbb-creative__name span {
     font-weight: 400;
+}
+
+.htbb-creative__name span.htbb-creative__last-name {
+    font-weight: 700;
 }
 
 
