@@ -40,9 +40,9 @@
     // ------------------------------------------------------------
 
     const config = {
-        sheetId: 'HERE',
+        sheetId: '19QAEno8goOYyxhKlsl3Q8SpZRmsWZXRYaazUUkrJIjk',
         sheetName: 'Creative',
-        apiKey: 'HERE',
+        apiKey: 'AIzaSyDbiZYZBlzvpHdDUWtVs76H3akcKuD-qQE',
         range: 'A:J',
     };
 
