@@ -4,6 +4,16 @@
   /**
    * Quotes Slider
    * Google Sheets + Simple Fade
+   *
+   * Supported HTML entered directly into Google Sheets:
+   *
+   * <br>
+   * <em>...</em>
+   * <i>...</i>
+   * <strong>...</strong>
+   * <b>...</b>
+   *
+   * All other HTML is escaped for safety.
    */
 
   const MODULE = '[Quotes]';
@@ -36,6 +46,44 @@
   let quotes = [];
   let currentIndex = 0;
   let timer = null;
+
+  // ------------------------------------------------------------
+  // SAFE RICH TEXT
+  // ------------------------------------------------------------
+
+  /**
+   * Escape everything first, then restore only the
+   * small list of HTML tags we explicitly allow.
+   *
+   * Examples:
+   *
+   * Powerful. <br>One of the finest plays of the year.
+   *
+   * <strong>Powerful.</strong>
+   *
+   * A <em>searing drama</em> that builds...
+   */
+  const richText = value => {
+    return String(value || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;')
+
+      // <em>, </em>, <i>, </i>,
+      // <strong>, </strong>, <b>, </b>
+      .replace(
+        /&lt;(\/?(?:em|strong|i|b)\s*)&gt;/gi,
+        '<$1>'
+      )
+
+      // <br>, <br/>, <br />
+      .replace(
+        /&lt;br\s*\/?&gt;/gi,
+        '<br>'
+      );
+  };
 
   // ------------------------------------------------------------
   // GET QUOTES
@@ -113,13 +161,21 @@
       return;
     }
 
-    quoteElement.textContent =
-      quote.quote;
+    /**
+     * innerHTML is intentional here.
+     *
+     * richText() escapes everything first and only
+     * restores our explicitly allowed formatting tags.
+     */
+    quoteElement.innerHTML =
+      richText(quote.quote);
 
-    authorElement.textContent =
-      quote.author
-        ? `— ${quote.author}`
-        : '';
+    if (quote.author) {
+      authorElement.innerHTML =
+        `— ${richText(quote.author)}`;
+    } else {
+      authorElement.innerHTML = '';
+    }
 
     authorElement.hidden =
       !quote.author;
