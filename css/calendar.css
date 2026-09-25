@@ -18,9 +18,9 @@
   /* One indirection so every rule below reads from a local name. The host
      variable wins whenever it is set; the literal is a safety net, not a
      design decision. */
-  --cal-ink: var(--htbb-text, #1e2b34);
-  --cal-paper: var(--htbb-background, #ece7dc);
-  --cal-accent: var(--htbb-accent, #1e2b34);
+  --cal-ink: var(--htbb-text, #333f48);
+  --cal-paper: var(--htbb-background, #ebe9e1);
+  --cal-accent: var(--htbb-accent, #333f48);
 
   /* Two weights of line, and the difference between them is the hierarchy:
      the grid recedes to structure, the showtime buttons come forward as the
@@ -76,6 +76,7 @@
 }
 
 .htbb-calendar__month {
+  color: #333f48 !important;
   margin: 0;
   min-width: 12ch;
   letter-spacing: 0.02em;
@@ -96,7 +97,7 @@
   background: none;
   border: 0;
   border-radius: 50%;
-  color: inherit;
+  color: #333f48;
   cursor: pointer;
 
   transition: background-color var(--cal-speed) ease;
