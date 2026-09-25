@@ -67,6 +67,7 @@
 
 
     const normalizeUrl = value => {
+
         const url =
             String(value || '').trim();
 
@@ -91,6 +92,74 @@
         } catch {
             return '';
         }
+    };
+
+
+    const hasBio = person => {
+
+        return Boolean(
+            person &&
+            String(person.bio || '').trim()
+        );
+    };
+
+
+    // ------------------------------------------------------------
+    // BIO NAVIGATION
+    // ------------------------------------------------------------
+
+    /**
+     * Find the next/previous cast member who actually
+     * has a bio.
+     *
+     * direction:
+     *  1 = next
+     * -1 = previous
+     *
+     * Navigation wraps around.
+     */
+    const getBioIndex = (
+        currentIndex,
+        direction
+    ) => {
+
+        if (!people.length) {
+            return null;
+        }
+
+        let index =
+            currentIndex;
+
+        for (
+            let count = 0;
+            count < people.length;
+            count++
+        ) {
+
+            index =
+                (
+                    index +
+                    direction +
+                    people.length
+                ) % people.length;
+
+            if (
+                index !== currentIndex &&
+                hasBio(people[index])
+            ) {
+                return index;
+            }
+        }
+
+        return null;
+    };
+
+
+    const getBioCount = () => {
+
+        return people.filter(
+            hasBio
+        ).length;
     };
 
 
@@ -485,21 +554,6 @@
         const rows =
             data.values || [];
 
-        /**
-         * Row 1:
-         *
-         * NAME
-         * ROLE
-         * INSTAGRAM
-         * FACEBOOK
-         * TWITTER (X)
-         * TIKTOK
-         * YOUTUBE
-         * WEBSITE
-         * IMAGE URL
-         * BIO
-         */
-
         return rows
             .slice(1)
 
@@ -566,10 +620,7 @@
     // CAST CARD
     // ------------------------------------------------------------
 
-    const castCardHtml = (
-        person,
-        index
-    ) => {
+    const castCardContentHtml = person => {
 
         const image =
             normalizeImageUrl(
@@ -577,56 +628,88 @@
             );
 
         return `
-            <article class="htbb-cast__card">
+            ${
+                image
+                    ? `
+                        <div class="htbb-cast__image-wrap">
 
-                <button
-                    class="htbb-cast__button"
-                    type="button"
-                    data-cast-index="${index}"
-                    aria-label="View biography for ${esc(person.name)}"
-                >
+                            <img
+                                class="htbb-cast__image"
+                                src="${esc(image)}"
+                                alt="${esc(person.name)}"
+                                loading="lazy"
+                            >
 
-                    ${
-                        image
-                            ? `
-                                <div class="htbb-cast__image-wrap">
+                        </div>
+                    `
+                    : `
+                        <div
+                            class="htbb-cast__image-wrap htbb-cast__image-wrap--empty"
+                            aria-hidden="true"
+                        ></div>
+                    `
+            }
 
-                                    <img
-                                        class="htbb-cast__image"
-                                        src="${esc(image)}"
-                                        alt="${esc(person.name)}"
-                                        loading="lazy"
-                                    >
+            <div class="htbb-cast__info">
 
-                                </div>
-                            `
-                            : `
-                                <div
-                                    class="htbb-cast__image-wrap htbb-cast__image-wrap--empty"
-                                    aria-hidden="true"
-                                ></div>
-                            `
-                    }
+                <h3 class="htbb-cast__name">
+                    ${esc(person.name)}
+                </h3>
 
-                    <div class="htbb-cast__info">
+                ${
+                    person.role
+                        ? `
+                            <p class="htbb-cast__role">
+                                ${esc(person.role)}
+                            </p>
+                        `
+                        : ''
+                }
 
-                        <h3 class="htbb-cast__name">
-                            ${esc(person.name)}
-                        </h3>
+            </div>
+        `;
+    };
 
-                        ${
-                            person.role
-                                ? `
-                                    <p class="htbb-cast__role">
-                                        ${esc(person.role)}
-                                    </p>
-                                `
-                                : ''
-                        }
 
-                    </div>
+    const castCardHtml = (
+        person,
+        index
+    ) => {
 
-                </button>
+        const content =
+            castCardContentHtml(
+                person
+            );
+
+        // Person has a bio: make the card interactive.
+        if (
+            hasBio(person)
+        ) {
+
+            return `
+                <article class="htbb-cast__card htbb-cast__card--has-bio">
+
+                    <button
+                        class="htbb-cast__button"
+                        type="button"
+                        data-cast-index="${index}"
+                        aria-label="View biography for ${esc(person.name)}"
+                    >
+                        ${content}
+                    </button>
+
+                </article>
+            `;
+        }
+
+
+        // Person has no bio: display only.
+        return `
+            <article class="htbb-cast__card htbb-cast__card--no-bio">
+
+                <div class="htbb-cast__button htbb-cast__button--static">
+                    ${content}
+                </div>
 
             </article>
         `;
@@ -736,10 +819,77 @@
 
 
     // ------------------------------------------------------------
+    // MODAL NAVIGATION
+    // ------------------------------------------------------------
+
+    const modalNavigationHtml = index => {
+
+        // Don't show navigation if there is only one bio.
+        if (
+            getBioCount() <= 1
+        ) {
+            return '';
+        }
+
+        const previousIndex =
+            getBioIndex(
+                index,
+                -1
+            );
+
+        const nextIndex =
+            getBioIndex(
+                index,
+                1
+            );
+
+        if (
+            previousIndex === null ||
+            nextIndex === null
+        ) {
+            return '';
+        }
+
+        const previousPerson =
+            people[previousIndex];
+
+        const nextPerson =
+            people[nextIndex];
+
+        return `
+            <div class="htbb-cast-modal__nav">
+
+                <button
+                    class="htbb-cast-modal__arrow htbb-cast-modal__arrow--prev"
+                    type="button"
+                    data-cast-nav="prev"
+                    aria-label="Previous biography: ${esc(previousPerson.name)}"
+                >
+                    <span aria-hidden="true">‹</span>
+                </button>
+
+                <button
+                    class="htbb-cast-modal__arrow htbb-cast-modal__arrow--next"
+                    type="button"
+                    data-cast-nav="next"
+                    aria-label="Next biography: ${esc(nextPerson.name)}"
+                >
+                    <span aria-hidden="true">›</span>
+                </button>
+
+            </div>
+        `;
+    };
+
+
+    // ------------------------------------------------------------
     // MODAL CONTENT
     // ------------------------------------------------------------
 
-    const modalHtml = person => {
+    const modalHtml = (
+        person,
+        index
+    ) => {
 
         const image =
             normalizeImageUrl(
@@ -790,6 +940,8 @@
                 </div>
 
             </div>
+
+            ${modalNavigationHtml(index)}
         `;
     };
 
@@ -810,7 +962,7 @@
 
         if (
             !target ||
-            !person.bio
+            !hasBio(person)
         ) {
             return;
         }
@@ -881,6 +1033,59 @@
 
 
     // ------------------------------------------------------------
+    // DISPLAY MODAL PERSON
+    // ------------------------------------------------------------
+
+    const displayModalPerson = index => {
+
+        const modal =
+            document.querySelector(
+                '#htbb-cast-modal'
+            );
+
+        if (!modal) {
+            return;
+        }
+
+        const person =
+            people[index];
+
+        if (
+            !person ||
+            !hasBio(person)
+        ) {
+            return;
+        }
+
+        const content =
+            modal.querySelector(
+                '.htbb-cast-modal__content'
+            );
+
+        if (!content) {
+            return;
+        }
+
+        activeIndex =
+            index;
+
+        modal.dataset.castIndex =
+            String(index);
+
+        content.innerHTML =
+            modalHtml(
+                person,
+                index
+            );
+
+        loadBio(
+            person,
+            modal
+        );
+    };
+
+
+    // ------------------------------------------------------------
     // OPEN MODAL
     // ------------------------------------------------------------
 
@@ -901,30 +1106,20 @@
         const person =
             people[index];
 
-        if (!person) {
+        // No bio = no modal.
+        if (
+            !person ||
+            !hasBio(person)
+        ) {
             return;
         }
-
-        const content =
-            modal.querySelector(
-                '.htbb-cast-modal__content'
-            );
-
-        if (!content) {
-            return;
-        }
-
-        activeIndex =
-            index;
 
         lastFocusedElement =
             trigger || null;
 
-        modal.dataset.castIndex =
-            String(index);
-
-        content.innerHTML =
-            modalHtml(person);
+        displayModalPerson(
+            index
+        );
 
         modal.classList.add(
             'is-open'
@@ -939,11 +1134,6 @@
             'htbb-cast-modal-open'
         );
 
-        loadBio(
-            person,
-            modal
-        );
-
         const closeButton =
             modal.querySelector(
                 '.htbb-cast-modal__close'
@@ -955,6 +1145,36 @@
                 closeButton.focus();
             });
         }
+    };
+
+
+    // ------------------------------------------------------------
+    // NAVIGATE MODAL
+    // ------------------------------------------------------------
+
+    const navigateModal = direction => {
+
+        if (
+            activeIndex === null
+        ) {
+            return;
+        }
+
+        const newIndex =
+            getBioIndex(
+                activeIndex,
+                direction
+            );
+
+        if (
+            newIndex === null
+        ) {
+            return;
+        }
+
+        displayModalPerson(
+            newIndex
+        );
     };
 
 
@@ -1052,11 +1272,12 @@
         );
 
 
-        // Close button.
+        // Modal controls.
         modal.addEventListener(
             'click',
             event => {
 
+                // Close.
                 if (
                     event.target.closest(
                         '.htbb-cast-modal__close'
@@ -1066,6 +1287,30 @@
                     return;
                 }
 
+
+                // Previous.
+                if (
+                    event.target.closest(
+                        '[data-cast-nav="prev"]'
+                    )
+                ) {
+                    navigateModal(-1);
+                    return;
+                }
+
+
+                // Next.
+                if (
+                    event.target.closest(
+                        '[data-cast-nav="next"]'
+                    )
+                ) {
+                    navigateModal(1);
+                    return;
+                }
+
+
+                // Overlay.
                 if (
                     event.target.classList.contains(
                         'htbb-cast-modal__overlay'
@@ -1077,18 +1322,47 @@
         );
 
 
-        // Escape key.
+        // Keyboard controls.
         document.addEventListener(
             'keydown',
             event => {
 
                 if (
-                    event.key === 'Escape' &&
-                    modal.classList.contains(
+                    !modal.classList.contains(
                         'is-open'
                     )
                 ) {
+                    return;
+                }
+
+
+                // Escape closes.
+                if (
+                    event.key === 'Escape'
+                ) {
                     closeModal();
+                    return;
+                }
+
+
+                // Left arrow = previous bio.
+                if (
+                    event.key === 'ArrowLeft'
+                ) {
+                    event.preventDefault();
+
+                    navigateModal(-1);
+                    return;
+                }
+
+
+                // Right arrow = next bio.
+                if (
+                    event.key === 'ArrowRight'
+                ) {
+                    event.preventDefault();
+
+                    navigateModal(1);
                 }
             }
         );
@@ -1162,6 +1436,7 @@
             );
         }
     };
+
 
     // ------------------------------------------------------------
     // START
