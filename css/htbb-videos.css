@@ -35,6 +35,10 @@
     grid-template-columns:
         repeat(3, minmax(0, 1fr));
     gap: 42px 36px;
+    max-width: 100%;
+    padding: 0 25px;
+    width: 1400px;
+    margin: 0 auto 5em;
 }
 
 
@@ -106,22 +110,15 @@ a.htbb-videos__link {
     position: absolute;
     top: 50%;
     left: 50%;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
     width: 74px;
     height: 74px;
-
     border-radius: 50%;
-
-    background:
-        rgba(52, 67, 74, 0.25);
-
+    background: rgb(52 67 74 / 25%);
     transform:
         translate(-50%, -50%);
-
     transition:
         transform 0.25s ease,
         background 0.25s ease;
@@ -171,25 +168,22 @@ a.htbb-videos__link {
 
 .htbb-videos__title {
     margin: 0;
-
-    font-size:
-        clamp(20px, 2vw, 26px);
-
+    font-size: clamp(18px, 2vw, 23px);
     font-weight: 700;
     line-height: 1;
-
     text-transform: uppercase;
+    font-family: 'avenir next' !important;
+    color: #333f48;
+    letter-spacing: 0;
 }
 
 .htbb-videos__description {
     margin-top: 4px;
-
     font-size:
         clamp(16px, 1.5vw, 20px);
-
     line-height: 1.15;
-
     text-transform: uppercase;
+    font-family: 'avenir next' !important;
 }
 
 
