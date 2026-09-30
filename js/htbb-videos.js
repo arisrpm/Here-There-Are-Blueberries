@@ -16,53 +16,27 @@
      * LINK:
      * Modal
      * External Link
-     *
-     * Supported video providers:
-     * YouTube
-     * Vimeo
      */
 
     const MODULE = '[HTBB Videos]';
 
-
-    // ------------------------------------------------------------
-    // CONFIG
-    // ------------------------------------------------------------
-
     const config = {
-
-        sheetId:
-            '19QAEno8goOYyxhKlsl3Q8SpZRmsWZXRYaazUUkrJIjk',
-
-        sheetName:
-            'Videos',
-
-        apiKey:
-            'AIzaSyDbiZYZBlzvpHdDUWtVs76H3akcKuD-qQE',
-
-        range:
-            'A:F',
-
-        selector:
-            '#htbb-videos',
-
-        modalSelector:
-            '#htbb-video-modal',
-
+        sheetId: '19QAEno8goOYyxhKlsl3Q8SpZRmsWZXRYaazUUkrJIjk',
+        sheetName: 'Videos',
+        apiKey: 'AIzaSyDbiZYZBlzvpHdDUWtVs76H3akcKuD-qQE',
+        selector: '#htbb-videos',
+        modalSelector: '#htbb-video-modal',
     };
 
-
     let videos = [];
-
     let lastFocusedElement = null;
 
 
-    // ------------------------------------------------------------
-    // HELPERS
-    // ------------------------------------------------------------
+    // ============================================================
+    // BASIC HELPERS
+    // ============================================================
 
     const esc = value => {
-
         return String(value ?? '')
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
@@ -73,22 +47,20 @@
 
 
     const normalizeUrl = value => {
-
-        const url =
-            String(value || '').trim();
+        const url = String(value || '').trim();
 
         if (!url) {
             return '';
         }
 
         try {
-
-            const parsed =
-                new URL(url);
+            const parsed = new URL(url);
 
             if (
                 parsed.protocol !== 'http:' &&
-                parsed.protocol !== 'https:'
+                parsed.protocol !== 'https:' &&
+                parsed.protocol !== 'mailto:' &&
+                parsed.protocol !== 'tel:'
             ) {
                 return '';
             }
@@ -96,36 +68,33 @@
             return parsed.href;
 
         } catch {
-
             return '';
-
         }
     };
 
 
-    // ------------------------------------------------------------
-    // SAFE RICH TEXT
-    // ------------------------------------------------------------
+    // ============================================================
+    // MANUALLY TYPED SAFE HTML
+    // ============================================================
 
     /**
-     * Allows basic formatting inside title/description fields.
+     * Allows intentionally typed:
      *
-     * Supported:
-     *
-     * <br>
-     * <em>
-     * <i>
      * <strong>
      * <b>
+     * <em>
+     * <i>
      * <span>
+     * <br>
+     *
+     * Also converts line breaks to <br>.
      */
 
-    const richText = value => {
-
+    const restoreSafeHtml = value => {
         return esc(value)
 
             .replace(
-                /&lt;(\/?(?:em|strong|i|b|span)\s*)&gt;/gi,
+                /&lt;(\/?(?:em|strong|i|b|span))&gt;/gi,
                 '<$1>'
             )
 
@@ -141,21 +110,176 @@
     };
 
 
-    // ------------------------------------------------------------
+    // ============================================================
+    // GOOGLE SHEETS RICH TEXT
+    // ============================================================
+
+    /**
+     * Google Sheets stores formatting for portions of a cell
+     * as textFormatRuns.
+     *
+     * Example:
+     *
+     * Behind the Scenes of Here There Are Blueberries
+     *                      ^^^^^^^^^^^^^^^^^^^^^^^^^^
+     *                              italic
+     *
+     * We convert those runs into semantic HTML.
+     */
+
+    const formatTextRun = (text, format = {}, fallbackLink = '') => {
+        let output = restoreSafeHtml(text);
+
+        if (!output) {
+            return '';
+        }
+
+        if (format.bold) {
+            output = `<strong>${output}</strong>`;
+        }
+
+        if (format.italic) {
+            output = `<em>${output}</em>`;
+        }
+
+        const link =
+            normalizeUrl(
+                format.link?.uri ||
+                fallbackLink
+            );
+
+        if (link) {
+            output =
+                `<a href="${esc(link)}" ` +
+                `target="_blank" ` +
+                `rel="noopener noreferrer">` +
+                `${output}</a>`;
+        }
+
+        return output;
+    };
+
+
+    const cellToHtml = cell => {
+        if (!cell) {
+            return '';
+        }
+
+        const text =
+            String(
+                cell.formattedValue ?? ''
+            );
+
+        if (!text) {
+            return '';
+        }
+
+        const runs =
+            Array.isArray(cell.textFormatRuns)
+                ? cell.textFormatRuns
+                : [];
+
+        const cellFormat =
+            cell.effectiveFormat?.textFormat ||
+            {};
+
+        const cellLink =
+            cell.hyperlink || '';
+
+
+        // --------------------------------------------------------
+        // NO INDIVIDUAL FORMAT RUNS
+        // --------------------------------------------------------
+
+        if (!runs.length) {
+            return formatTextRun(
+                text,
+                cellFormat,
+                cellLink
+            );
+        }
+
+
+        // --------------------------------------------------------
+        // FORMAT RUNS
+        // --------------------------------------------------------
+
+        const output = [];
+
+        /**
+         * Important:
+         *
+         * Google startIndex values are UTF-16 indexes.
+         * JS String.slice() also operates on UTF-16 code units,
+         * so these indexes line up correctly.
+         */
+
+        for (
+            let i = 0;
+            i < runs.length;
+            i++
+        ) {
+            const run = runs[i];
+
+            const start =
+                Number(
+                    run.startIndex || 0
+                );
+
+            const end =
+                i + 1 < runs.length
+                    ? Number(
+                        runs[i + 1].startIndex
+                    )
+                    : text.length;
+
+            const segment =
+                text.slice(
+                    start,
+                    end
+                );
+
+            /**
+             * A run inherits the cell-level formatting
+             * unless the run explicitly overrides it.
+             */
+
+            const runFormat = {
+                ...cellFormat,
+                ...(run.format || {}),
+            };
+
+            output.push(
+                formatTextRun(
+                    segment,
+                    runFormat,
+                    ''
+                )
+            );
+        }
+
+        return output.join('');
+    };
+
+
+    const cellText = cell => {
+        return String(
+            cell?.formattedValue ?? ''
+        ).trim();
+    };
+
+
+    // ============================================================
     // GOOGLE DRIVE THUMBNAILS
-    // ------------------------------------------------------------
+    // ============================================================
 
     const getGoogleDriveId = value => {
-
         const url =
             String(value || '').trim();
 
         if (!url) {
             return '';
         }
-
-
-        // /file/d/FILE_ID/
 
         let match =
             url.match(
@@ -166,11 +290,7 @@
             return match[1];
         }
 
-
-        // ?id=FILE_ID
-
         try {
-
             const parsed =
                 new URL(url);
 
@@ -179,7 +299,6 @@
                     'drive.google.com'
                 )
             ) {
-
                 return (
                     parsed.searchParams.get('id') ||
                     ''
@@ -187,16 +306,14 @@
             }
 
         } catch {
-            // Ignore invalid URL.
+            // Ignore.
         }
-
 
         return '';
     };
 
 
     const normalizeImageUrl = value => {
-
         const raw =
             String(value || '').trim();
 
@@ -208,7 +325,6 @@
             getGoogleDriveId(raw);
 
         if (driveId) {
-
             return (
                 `https://drive.google.com/thumbnail` +
                 `?id=${encodeURIComponent(driveId)}` +
@@ -220,12 +336,11 @@
     };
 
 
-    // ------------------------------------------------------------
+    // ============================================================
     // YOUTUBE
-    // ------------------------------------------------------------
+    // ============================================================
 
     const getYouTubeId = value => {
-
         const raw =
             String(value || '').trim();
 
@@ -234,7 +349,6 @@
         }
 
         try {
-
             const url =
                 new URL(raw);
 
@@ -243,13 +357,7 @@
                     .replace(/^www\./, '')
                     .toLowerCase();
 
-
-            // youtu.be/VIDEO_ID
-
-            if (
-                host === 'youtu.be'
-            ) {
-
+            if (host === 'youtu.be') {
                 return (
                     url.pathname
                         .split('/')
@@ -258,28 +366,18 @@
                 );
             }
 
-
             if (
                 host === 'youtube.com' ||
                 host === 'm.youtube.com'
             ) {
-
-                // youtube.com/watch?v=VIDEO_ID
-
                 if (
                     url.pathname === '/watch'
                 ) {
-
                     return (
                         url.searchParams.get('v') ||
                         ''
                     );
                 }
-
-
-                // youtube.com/embed/VIDEO_ID
-                // youtube.com/shorts/VIDEO_ID
-                // youtube.com/live/VIDEO_ID
 
                 const parts =
                     url.pathname
@@ -293,11 +391,7 @@
                         'live',
                     ].includes(parts[0])
                 ) {
-
-                    return (
-                        parts[1] ||
-                        ''
-                    );
+                    return parts[1] || '';
                 }
             }
 
@@ -305,17 +399,15 @@
             // Ignore.
         }
 
-
         return '';
     };
 
 
-    // ------------------------------------------------------------
+    // ============================================================
     // VIMEO
-    // ------------------------------------------------------------
+    // ============================================================
 
     const getVimeoId = value => {
-
         const raw =
             String(value || '').trim();
 
@@ -324,7 +416,6 @@
         }
 
         try {
-
             const url =
                 new URL(raw);
 
@@ -345,14 +436,6 @@
                     .split('/')
                     .filter(Boolean);
 
-
-            /**
-             * Handles:
-             *
-             * vimeo.com/123456
-             * player.vimeo.com/video/123456
-             */
-
             const id =
                 parts.find(part =>
                     /^\d+$/.test(part)
@@ -361,42 +444,35 @@
             return id || '';
 
         } catch {
-
             return '';
-
         }
     };
 
 
-    // ------------------------------------------------------------
+    // ============================================================
     // VIDEO TYPE
-    // ------------------------------------------------------------
+    // ============================================================
 
     const getVideoType = value => {
-
         const youtubeId =
             getYouTubeId(value);
 
         if (youtubeId) {
-
             return {
                 type: 'youtube',
                 id: youtubeId,
             };
         }
 
-
         const vimeoId =
             getVimeoId(value);
 
         if (vimeoId) {
-
             return {
                 type: 'vimeo',
                 id: vimeoId,
             };
         }
-
 
         return {
             type: 'external',
@@ -405,12 +481,11 @@
     };
 
 
-    // ------------------------------------------------------------
-    // AUTO THUMBNAIL
-    // ------------------------------------------------------------
+    // ============================================================
+    // AUTO THUMBNAILS
+    // ============================================================
 
     const getYouTubeThumbnail = id => {
-
         if (!id) {
             return '';
         }
@@ -422,15 +497,7 @@
     };
 
 
-    /**
-     * Vimeo doesn't expose a predictable static thumbnail
-     * URL from the video ID alone.
-     *
-     * We use Vimeo's oEmbed endpoint to retrieve it.
-     */
-
     const getVimeoThumbnail = async url => {
-
         const videoUrl =
             normalizeUrl(url);
 
@@ -439,7 +506,6 @@
         }
 
         try {
-
             const endpoint =
                 `https://vimeo.com/api/oembed.json` +
                 `?url=${encodeURIComponent(videoUrl)}`;
@@ -448,7 +514,6 @@
                 await fetch(endpoint);
 
             if (!response.ok) {
-
                 throw new Error(
                     `Vimeo thumbnail request failed: ` +
                     `${response.status}`
@@ -466,7 +531,6 @@
             );
 
         } catch (error) {
-
             console.warn(
                 `${MODULE} Could not load Vimeo thumbnail.`,
                 error
@@ -477,23 +541,11 @@
     };
 
 
-    // ------------------------------------------------------------
+    // ============================================================
     // CATEGORY NORMALIZATION
-    // ------------------------------------------------------------
-
-    /**
-     * "Further Learning"
-     * "further learning"
-     * " Further   Learning "
-     *
-     * all become the same grouping key.
-     *
-     * We still DISPLAY the spelling/capitalization
-     * from the first occurrence in the Sheet.
-     */
+    // ============================================================
 
     const categoryKey = value => {
-
         return String(value || '')
             .trim()
             .toLowerCase()
@@ -501,27 +553,51 @@
     };
 
 
-    // ------------------------------------------------------------
-    // GOOGLE SHEETS
-    // ------------------------------------------------------------
+    // ============================================================
+    // GOOGLE SHEETS DATA
+    // ============================================================
+
+    /**
+     * We intentionally use spreadsheets.get + includeGridData
+     * instead of /values.
+     *
+     * /values gives us text only.
+     *
+     * This gives us:
+     * - formattedValue
+     * - textFormatRuns
+     * - bold
+     * - italic
+     * - links
+     * - cell formatting
+     */
 
     const getVideos = async () => {
-
         const range =
             encodeURIComponent(
-                `${config.sheetName}!${config.range}`
+                `${config.sheetName}!A:F`
             );
+
+        const fields =
+            encodeURIComponent([
+                'sheets.data.rowData.values.formattedValue',
+                'sheets.data.rowData.values.hyperlink',
+                'sheets.data.rowData.values.textFormatRuns',
+                'sheets.data.rowData.values.effectiveFormat.textFormat',
+            ].join(','));
 
         const url =
             `https://sheets.googleapis.com/v4/spreadsheets/` +
-            `${config.sheetId}/values/${range}` +
-            `?key=${encodeURIComponent(config.apiKey)}`;
+            `${config.sheetId}` +
+            `?ranges=${range}` +
+            `&includeGridData=true` +
+            `&fields=${fields}` +
+            `&key=${encodeURIComponent(config.apiKey)}`;
 
         const response =
             await fetch(url);
 
         if (!response.ok) {
-
             throw new Error(
                 `Google Sheets request failed: ` +
                 `${response.status}`
@@ -532,158 +608,130 @@
             await response.json();
 
         const rows =
-            data.values || [];
-
+            data.sheets?.[0]
+                ?.data?.[0]
+                ?.rowData || [];
 
         return rows
 
-            // Skip header.
+            // Skip header row.
             .slice(1)
 
             .map((row, index) => {
+                const cells =
+                    row.values || [];
+
+                const titleCell =
+                    cells[0] || {};
+
+                const descriptionCell =
+                    cells[1] || {};
 
                 const url =
-                    String(
-                        row[2] || ''
-                    ).trim();
+                    cellText(cells[2]);
 
-                const type =
+                const link =
+                    cellText(cells[3]);
+
+                const category =
+                    cellText(cells[4]);
+
+                const thumbnail =
+                    cellText(cells[5]);
+
+                const videoType =
                     getVideoType(url);
 
                 return {
-
                     index,
 
+                    // Plain version is useful for accessibility.
                     title:
-                        String(
-                            row[0] || ''
-                        ).trim(),
+                        cellText(titleCell),
+
+                    // Rich HTML version for visual output.
+                    titleHtml:
+                        cellToHtml(titleCell),
 
                     description:
-                        String(
-                            row[1] || ''
-                        ).trim(),
+                        cellText(descriptionCell),
+
+                    descriptionHtml:
+                        cellToHtml(
+                            descriptionCell
+                        ),
 
                     url,
-
-                    link:
-                        String(
-                            row[3] || ''
-                        ).trim(),
-
-                    category:
-                        String(
-                            row[4] || ''
-                        ).trim(),
-
-                    thumbnail:
-                        String(
-                            row[5] || ''
-                        ).trim(),
+                    link,
+                    category,
+                    thumbnail,
 
                     type:
-                        type.type,
+                        videoType.type,
 
                     videoId:
-                        type.id,
-
+                        videoType.id,
                 };
-
             })
 
-            // A URL is required.
             .filter(video =>
                 video.url
             );
     };
 
 
-    // ------------------------------------------------------------
+    // ============================================================
     // RESOLVE THUMBNAILS
-    // ------------------------------------------------------------
+    // ============================================================
 
     const resolveThumbnail = async video => {
-
-        /**
-         * Custom thumbnail always wins.
-         */
-
         if (video.thumbnail) {
-
-            return (
-                normalizeImageUrl(
-                    video.thumbnail
-                )
+            return normalizeImageUrl(
+                video.thumbnail
             );
         }
-
-
-        // YouTube automatic thumbnail.
 
         if (
             video.type === 'youtube'
         ) {
-
-            return (
-                getYouTubeThumbnail(
-                    video.videoId
-                )
+            return getYouTubeThumbnail(
+                video.videoId
             );
         }
-
-
-        // Vimeo automatic thumbnail.
 
         if (
             video.type === 'vimeo'
         ) {
-
-            return (
-                await getVimeoThumbnail(
-                    video.url
-                )
+            return await getVimeoThumbnail(
+                video.url
             );
         }
-
 
         return '';
     };
 
 
     const resolveThumbnails = async items => {
-
         await Promise.all(
-
-            items.map(
-                async video => {
-
-                    video.resolvedThumbnail =
-                        await resolveThumbnail(
-                            video
-                        );
-                }
-            )
+            items.map(async video => {
+                video.resolvedThumbnail =
+                    await resolveThumbnail(
+                        video
+                    );
+            })
         );
     };
 
 
-    // ------------------------------------------------------------
+    // ============================================================
     // LINK BEHAVIOR
-    // ------------------------------------------------------------
+    // ============================================================
 
     const usesModal = video => {
-
         const setting =
-            String(
-                video.link || ''
-            )
+            String(video.link || '')
                 .trim()
                 .toLowerCase();
-
-
-        /**
-         * Only YouTube/Vimeo can use our video modal.
-         */
 
         return (
             setting === 'modal' &&
@@ -695,12 +743,11 @@
     };
 
 
-    // ------------------------------------------------------------
+    // ============================================================
     // CARD CONTENT
-    // ------------------------------------------------------------
+    // ============================================================
 
     const cardContentHtml = video => {
-
         const thumbnail =
             video.resolvedThumbnail || '';
 
@@ -737,20 +784,20 @@
             <div class="htbb-videos__info">
 
                 ${
-                    video.title
+                    video.titleHtml
                         ? `
                             <h3 class="htbb-videos__title">
-                                ${richText(video.title)}
+                                ${video.titleHtml}
                             </h3>
                         `
                         : ''
                 }
 
                 ${
-                    video.description
+                    video.descriptionHtml
                         ? `
                             <div class="htbb-videos__description">
-                                ${richText(video.description)}
+                                ${video.descriptionHtml}
                             </div>
                         `
                         : ''
@@ -761,24 +808,17 @@
     };
 
 
-    // ------------------------------------------------------------
+    // ============================================================
     // CARD
-    // ------------------------------------------------------------
+    // ============================================================
 
     const cardHtml = video => {
-
         const content =
             cardContentHtml(video);
-
-
-        // ----------------------------------------
-        // MODAL
-        // ----------------------------------------
 
         if (
             usesModal(video)
         ) {
-
             return `
                 <article class="htbb-videos__card">
 
@@ -795,18 +835,12 @@
             `;
         }
 
-
-        // ----------------------------------------
-        // EXTERNAL LINK
-        // ----------------------------------------
-
         const url =
             normalizeUrl(
                 video.url
             );
 
         if (url) {
-
             return `
                 <article class="htbb-videos__card">
 
@@ -823,7 +857,6 @@
             `;
         }
 
-
         return `
             <article class="htbb-videos__card">
                 ${content}
@@ -832,18 +865,15 @@
     };
 
 
-    // ------------------------------------------------------------
+    // ============================================================
     // GROUP CATEGORIES
-    // ------------------------------------------------------------
+    // ============================================================
 
     const groupVideos = items => {
-
         const groups =
             new Map();
 
-
         items.forEach(video => {
-
             const label =
                 video.category ||
                 'Videos';
@@ -851,11 +881,9 @@
             const key =
                 categoryKey(label);
 
-
             if (
                 !groups.has(key)
             ) {
-
                 groups.set(
                     key,
                     {
@@ -865,14 +893,11 @@
                 );
             }
 
-
             groups
                 .get(key)
                 .videos
                 .push(video);
-
         });
-
 
         return Array.from(
             groups.values()
@@ -880,12 +905,11 @@
     };
 
 
-    // ------------------------------------------------------------
+    // ============================================================
     // CATEGORY
-    // ------------------------------------------------------------
+    // ============================================================
 
     const categoryHtml = group => {
-
         return `
             <section class="htbb-videos__category">
 
@@ -908,22 +932,19 @@
     };
 
 
-    // ------------------------------------------------------------
+    // ============================================================
     // RENDER
-    // ------------------------------------------------------------
+    // ============================================================
 
     const renderVideos = container => {
-
         const target =
             container.querySelector(
                 '.htbb-videos__categories'
             ) ||
             container;
 
-
         const groups =
             groupVideos(videos);
-
 
         target.innerHTML =
             groups
@@ -932,16 +953,14 @@
     };
 
 
-    // ------------------------------------------------------------
+    // ============================================================
     // VIDEO EMBED
-    // ------------------------------------------------------------
+    // ============================================================
 
     const embedHtml = video => {
-
         if (
             video.type === 'youtube'
         ) {
-
             return `
                 <iframe
                     src="https://www.youtube.com/embed/${esc(video.videoId)}?autoplay=1&rel=0"
@@ -952,11 +971,9 @@
             `;
         }
 
-
         if (
             video.type === 'vimeo'
         ) {
-
             return `
                 <iframe
                     src="https://player.vimeo.com/video/${esc(video.videoId)}?autoplay=1"
@@ -967,20 +984,18 @@
             `;
         }
 
-
         return '';
     };
 
 
-    // ------------------------------------------------------------
+    // ============================================================
     // OPEN MODAL
-    // ------------------------------------------------------------
+    // ============================================================
 
     const openModal = (
         video,
         trigger
     ) => {
-
         const modal =
             document.querySelector(
                 config.modalSelector
@@ -993,7 +1008,6 @@
             return;
         }
 
-
         const content =
             modal.querySelector(
                 '.htbb-video-modal__content'
@@ -1003,39 +1017,31 @@
             return;
         }
 
-
         lastFocusedElement =
             trigger || null;
-
 
         content.innerHTML =
             embedHtml(video);
 
-
         modal.classList.add(
             'is-open'
         );
-
 
         modal.setAttribute(
             'aria-hidden',
             'false'
         );
 
-
         document.body.classList.add(
             'htbb-video-modal-open'
         );
-
 
         const closeButton =
             modal.querySelector(
                 '.htbb-video-modal__close'
             );
 
-
         if (closeButton) {
-
             requestAnimationFrame(() => {
                 closeButton.focus();
             });
@@ -1043,12 +1049,11 @@
     };
 
 
-    // ------------------------------------------------------------
+    // ============================================================
     // CLOSE MODAL
-    // ------------------------------------------------------------
+    // ============================================================
 
     const closeModal = () => {
-
         const modal =
             document.querySelector(
                 config.modalSelector
@@ -1058,26 +1063,18 @@
             return;
         }
 
-
         modal.classList.remove(
             'is-open'
         );
-
 
         modal.setAttribute(
             'aria-hidden',
             'true'
         );
 
-
         document.body.classList.remove(
             'htbb-video-modal-open'
         );
-
-
-        /**
-         * Removing iframe stops video/audio immediately.
-         */
 
         const content =
             modal.querySelector(
@@ -1085,9 +1082,9 @@
             );
 
         if (content) {
+            // Removing the iframe stops playback immediately.
             content.innerHTML = '';
         }
-
 
         if (
             lastFocusedElement &&
@@ -1095,34 +1092,27 @@
                 lastFocusedElement
             )
         ) {
-
             lastFocusedElement.focus();
         }
-
 
         lastFocusedElement =
             null;
     };
 
 
-    // ------------------------------------------------------------
+    // ============================================================
     // EVENTS
-    // ------------------------------------------------------------
+    // ============================================================
 
     const bindEvents = container => {
-
         const modal =
             document.querySelector(
                 config.modalSelector
             );
 
-
-        // Video cards.
-
         container.addEventListener(
             'click',
             event => {
-
                 const button =
                     event.target.closest(
                         '[data-video-index]'
@@ -1132,12 +1122,10 @@
                     return;
                 }
 
-
                 const index =
                     Number(
                         button.dataset.videoIndex
                     );
-
 
                 const video =
                     videos.find(
@@ -1145,11 +1133,9 @@
                             item.index === index
                     );
 
-
                 if (!video) {
                     return;
                 }
-
 
                 openModal(
                     video,
@@ -1158,53 +1144,35 @@
             }
         );
 
-
         if (!modal) {
             return;
         }
 
-
-        // Modal click controls.
-
         modal.addEventListener(
             'click',
             event => {
-
-
-                // Close button.
-
                 if (
                     event.target.closest(
                         '.htbb-video-modal__close'
                     )
                 ) {
-
                     closeModal();
-
                     return;
                 }
-
-
-                // Overlay.
 
                 if (
                     event.target.classList.contains(
                         'htbb-video-modal__overlay'
                     )
                 ) {
-
                     closeModal();
                 }
             }
         );
 
-
-        // Escape.
-
         document.addEventListener(
             'keydown',
             event => {
-
                 if (
                     event.key !== 'Escape' ||
                     !modal.classList.contains(
@@ -1214,90 +1182,72 @@
                     return;
                 }
 
-
                 closeModal();
             }
         );
     };
 
 
-    // ------------------------------------------------------------
+    // ============================================================
     // INIT
-    // ------------------------------------------------------------
+    // ============================================================
 
     const init = async () => {
-
         const container =
             document.querySelector(
                 config.selector
             );
 
-
         if (!container) {
             return;
         }
-
 
         container.setAttribute(
             'aria-busy',
             'true'
         );
 
-
         try {
-
             videos =
                 await getVideos();
-
 
             console.log(
                 `${MODULE} Loaded ${videos.length} video(s).`,
                 videos
             );
 
-
             if (!videos.length) {
-
                 container.hidden =
                     true;
 
                 return;
             }
 
-
             await resolveThumbnails(
                 videos
             );
-
 
             renderVideos(
                 container
             );
 
-
             bindEvents(
                 container
             );
 
-
         } catch (error) {
-
             console.error(
                 `${MODULE} Unable to load videos.`,
                 error
             );
 
-
             container.hidden =
                 true;
 
-
         } finally {
-
             container.removeAttribute(
                 'aria-busy'
             );
-
 
             container.classList.remove(
                 'is-loading'
@@ -1306,15 +1256,14 @@
     };
 
 
-    // ------------------------------------------------------------
+    // ============================================================
     // START
-    // ------------------------------------------------------------
+    // ============================================================
 
     if (
         document.readyState ===
         'loading'
     ) {
-
         document.addEventListener(
             'DOMContentLoaded',
             init,
@@ -1324,9 +1273,7 @@
         );
 
     } else {
-
         init();
-
     }
 
 })();
