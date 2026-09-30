@@ -197,7 +197,7 @@
    MOBILE
    ============================================================ */
 
-@media (max-width: 640px) {
+@media (max-width: 640px) {    
 
 	.htbb-faq__question {
 		gap: 1.25rem;
@@ -206,7 +206,7 @@
 	}
 
 	.htbb-faq__label {
-		font-size: 16px;
+		font-size: 18px;
 	}
 
 	.htbb-faq__icon {
@@ -216,6 +216,7 @@
 	}
 
 	.htbb-faq__answer-inner {
+        font-size: 16px;
 		padding:
 			0
 			3.25rem
