@@ -1,0 +1,221 @@
+/* ============================================================
+   FAQ
+   ============================================================ */
+
+#htbb-faq {
+	width: 100%;
+	max-width: 860px;
+	margin: 0 auto;
+}
+
+/* Reserve a little space while Google Sheets loads. */
+#htbb-faq.is-loading {
+	min-height: 20rem;
+}
+
+/* ------------------------------------------------------------
+   ITEM
+   ------------------------------------------------------------ */
+
+.htbb-faq__item {
+	border-bottom: 1px solid #333f48;
+	transition:
+		background-color 0.2s ease,
+		color 0.2s ease;
+}
+
+.htbb-faq__item:first-child {
+	border-top: 1px solid #333f48;
+}
+
+.htbb-faq__heading {
+	margin: 0;
+	font: inherit;
+}
+
+/* ------------------------------------------------------------
+   QUESTION
+   ------------------------------------------------------------ */
+
+.htbb-faq__question {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 2rem;
+
+	width: 100%;
+	min-height: 60px;
+	padding: 1.25rem 1.5rem;
+
+	background: transparent;
+	border: 0;
+	border-radius: 0;
+
+	color: #333f48;
+
+	font: inherit;
+	text-align: left;
+
+	cursor: pointer;
+	appearance: none;
+
+	transition:
+		background-color 0.2s ease,
+		color 0.2s ease;
+}
+
+.htbb-faq__label {
+	flex: 1;
+
+	font-weight: 600;
+	line-height: 1.25;
+}
+
+/* ------------------------------------------------------------
+   PLUS / MINUS
+   ------------------------------------------------------------ */
+
+.htbb-faq__icon {
+	--htbb-faq-icon-weight: 2px;
+
+	position: relative;
+
+	flex: 0 0 22px;
+	width: 22px;
+	height: 22px;
+
+	color: currentColor;
+}
+
+.htbb-faq__icon::before,
+.htbb-faq__icon::after {
+	content: '';
+
+	position: absolute;
+	top: 50%;
+	left: 0;
+
+	width: 100%;
+	height: var(--htbb-faq-icon-weight);
+
+	margin-top:
+		calc(
+			var(--htbb-faq-icon-weight) / -2
+		);
+
+	background: currentColor;
+
+	transition:
+		transform 0.2s ease;
+}
+
+/* Vertical portion of + */
+.htbb-faq__icon::after {
+	transform: rotate(90deg);
+}
+
+/* Open = minus */
+.htbb-faq__question[aria-expanded='true']
+	.htbb-faq__icon::after {
+	transform: rotate(0deg);
+}
+
+/* ------------------------------------------------------------
+   ANSWER
+   ------------------------------------------------------------ */
+
+.htbb-faq__answer[hidden] {
+	display: none;
+}
+
+.htbb-faq__answer-inner {
+	padding:
+		0
+		4.75rem
+		1.5rem
+		1.5rem;
+
+	color: inherit;
+
+	line-height: 1.5;
+}
+
+.htbb-faq__answer-inner p {
+	margin: 0 0 1em;
+}
+
+.htbb-faq__answer-inner p:last-child {
+	margin-bottom: 0;
+}
+
+.htbb-faq__answer-inner a {
+	color: inherit;
+	text-decoration: underline;
+	text-underline-offset: 2px;
+}
+
+/* ------------------------------------------------------------
+   OPEN ITEM
+   ------------------------------------------------------------ */
+
+.htbb-faq__item:has(
+	.htbb-faq__question[aria-expanded='true']
+) {
+	background: #333f48;
+	color: #eae9e1;
+}
+
+.htbb-faq__item:has(
+	.htbb-faq__question[aria-expanded='true']
+)
+.htbb-faq__question {
+	color: #eae9e1 !important;
+}
+
+.htbb-faq__item:has(
+	.htbb-faq__question[aria-expanded='true']
+)
+.htbb-faq__answer-inner {
+	color: #eae9e1;
+}
+
+/* ------------------------------------------------------------
+   FOCUS
+   ------------------------------------------------------------ */
+
+.htbb-faq__question:focus-visible {
+	outline: 2px solid currentColor;
+	outline-offset: -4px;
+}
+
+/* ============================================================
+   MOBILE
+   ============================================================ */
+
+@media (max-width: 640px) {
+
+	.htbb-faq__question {
+		gap: 1.25rem;
+		min-height: 54px;
+		padding: 1rem;
+	}
+
+	.htbb-faq__label {
+		font-size: 16px;
+	}
+
+	.htbb-faq__icon {
+		flex-basis: 18px;
+		width: 18px;
+		height: 18px;
+	}
+
+	.htbb-faq__answer-inner {
+		padding:
+			0
+			3.25rem
+			1.25rem
+			1rem;
+	}
+
+}

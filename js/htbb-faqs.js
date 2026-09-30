@@ -33,7 +33,7 @@
 			'AIzaSyDbiZYZBlzvpHdDUWtVs76H3akcKuD-qQE',
 
 		selector:
-			'#bc-faq',
+			'#htbb-faq',
 
 		// false = opening one answer closes the others.
 		allowMultiple:
@@ -146,41 +146,41 @@
 		index
 	) => {
 		const questionId =
-			`bc-faq-question-${index}`;
+			`htbb-faq-question-${index}`;
 
 		const answerId =
-			`bc-faq-answer-${index}`;
+			`htbb-faq-answer-${index}`;
 
 		return `
-			<div class="bc-faq__item">
+			<div class="htbb-faq__item">
 
-				<h3 class="bc-faq__heading">
+				<h3 class="htbb-faq__heading">
 					<button
-						class="bc-faq__question"
+						class="htbb-faq__question"
 						type="button"
 						id="${questionId}"
 						aria-expanded="false"
 						aria-controls="${answerId}"
 					>
-						<span class="bc-faq__label">
+						<span class="htbb-faq__label">
 							${richText(faq.question)}
 						</span>
 
 						<span
-							class="bc-faq__icon"
+							class="htbb-faq__icon"
 							aria-hidden="true"
 						></span>
 					</button>
 				</h3>
 
 				<div
-					class="bc-faq__answer"
+					class="htbb-faq__answer"
 					id="${answerId}"
 					role="region"
 					aria-labelledby="${questionId}"
 					hidden
 				>
-					<div class="bc-faq__answer-inner">
+					<div class="htbb-faq__answer-inner">
 						${formatAnswer(faq.answer)}
 					</div>
 				</div>
@@ -227,7 +227,7 @@
 			event => {
 				const button =
 					event.target.closest(
-						'.bc-faq__question'
+						'.htbb-faq__question'
 					);
 
 				if (
@@ -248,7 +248,7 @@
 				) {
 					container
 						.querySelectorAll(
-							'.bc-faq__question[aria-expanded="true"]'
+							'.htbb-faq__question[aria-expanded="true"]'
 						)
 						.forEach(other => {
 							setItemOpen(
