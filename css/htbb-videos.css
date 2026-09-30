@@ -1,0 +1,379 @@
+/* ============================================================
+   HTBB — VIDEOS
+   ============================================================ */
+
+.htbb-videos {
+    width: 100%;
+}
+
+.htbb-videos__categories {
+    display: flex;
+    flex-direction: column;
+    gap: 60px;
+}
+
+
+/* ------------------------------------------------------------
+   CATEGORY
+   ------------------------------------------------------------ */
+
+.htbb-videos__category {
+    width: 100%;
+}
+
+.htbb-videos__category .header-bar {
+    margin-bottom: 54px;
+}
+
+
+/* ------------------------------------------------------------
+   GRID
+   ------------------------------------------------------------ */
+
+.htbb-videos__grid {
+    display: grid;
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr));
+    gap: 42px 36px;
+}
+
+
+/* ------------------------------------------------------------
+   CARD
+   ------------------------------------------------------------ */
+
+.htbb-videos__card {
+    min-width: 0;
+}
+
+.htbb-videos__link {
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    text-decoration: none;
+}
+
+button.htbb-videos__link {
+    cursor: pointer;
+}
+
+a.htbb-videos__link {
+    color: inherit;
+}
+
+
+/* ------------------------------------------------------------
+   THUMBNAIL
+   ------------------------------------------------------------ */
+
+.htbb-videos__thumbnail {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border: 10px solid #34434a;
+    background: #eae9e1;
+}
+
+.htbb-videos__image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+
+    transition:
+        transform 0.3s ease,
+        opacity 0.3s ease;
+}
+
+.htbb-videos__placeholder {
+    width: 100%;
+    height: 100%;
+}
+
+
+/* ------------------------------------------------------------
+   PLAY BUTTON
+   ------------------------------------------------------------ */
+
+.htbb-videos__play {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 74px;
+    height: 74px;
+
+    border-radius: 50%;
+
+    background:
+        rgba(52, 67, 74, 0.25);
+
+    transform:
+        translate(-50%, -50%);
+
+    transition:
+        transform 0.25s ease,
+        background 0.25s ease;
+}
+
+.htbb-videos__play span {
+    display: block;
+
+    width: 0;
+    height: 0;
+
+    margin-left: 6px;
+
+    border-top: 18px solid transparent;
+    border-bottom: 18px solid transparent;
+    border-left: 28px solid #34434a;
+}
+
+
+/* ------------------------------------------------------------
+   HOVER
+   ------------------------------------------------------------ */
+
+.htbb-videos__link:hover .htbb-videos__image {
+    transform: scale(1.025);
+}
+
+.htbb-videos__link:hover .htbb-videos__play {
+    transform:
+        translate(-50%, -50%)
+        scale(1.08);
+}
+
+.htbb-videos__link:focus-visible {
+    outline: 3px solid currentColor;
+    outline-offset: 8px;
+}
+
+
+/* ------------------------------------------------------------
+   INFO
+   ------------------------------------------------------------ */
+
+.htbb-videos__info {
+    padding-top: 14px;
+}
+
+.htbb-videos__title {
+    margin: 0;
+
+    font-size:
+        clamp(20px, 2vw, 26px);
+
+    font-weight: 700;
+    line-height: 1;
+
+    text-transform: uppercase;
+}
+
+.htbb-videos__description {
+    margin-top: 4px;
+
+    font-size:
+        clamp(16px, 1.5vw, 20px);
+
+    line-height: 1.15;
+
+    text-transform: uppercase;
+}
+
+
+/* ============================================================
+   VIDEO MODAL
+   ============================================================ */
+
+.htbb-video-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+
+    display: none;
+}
+
+.htbb-video-modal.is-open {
+    display: block;
+}
+
+.htbb-video-modal__overlay {
+    position: absolute;
+    inset: 0;
+
+    background:
+        rgba(0, 0, 0, 0.85);
+}
+
+
+/* ------------------------------------------------------------
+   MODAL DIALOG
+   ------------------------------------------------------------ */
+
+.htbb-video-modal__dialog {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+
+    width:
+        min(
+            1100px,
+            calc(100% - 80px)
+        );
+
+    transform:
+        translate(-50%, -50%);
+}
+
+body.htbb-video-modal-open {
+    overflow: hidden;
+}
+
+
+/* ------------------------------------------------------------
+   VIDEO
+   ------------------------------------------------------------ */
+
+.htbb-video-modal__content {
+    position: relative;
+
+    width: 100%;
+
+    aspect-ratio: 16 / 9;
+
+    background: #000;
+}
+
+.htbb-video-modal__content iframe {
+    position: absolute;
+    inset: 0;
+
+    width: 100%;
+    height: 100%;
+
+    border: 0;
+}
+
+
+/* ------------------------------------------------------------
+   CLOSE
+   ------------------------------------------------------------ */
+
+.htbb-video-modal__close {
+    position: absolute;
+
+    top: -50px;
+    right: 0;
+
+    z-index: 3;
+
+    width: 36px;
+    height: 36px;
+
+    padding: 0;
+
+    border: 0;
+
+    background: none;
+
+    color: #fff;
+
+    cursor: pointer;
+}
+
+.htbb-video-modal__close span {
+    position: absolute;
+
+    top: 50%;
+    left: 50%;
+
+    width: 32px;
+    height: 3px;
+
+    background:
+        currentColor;
+}
+
+.htbb-video-modal__close span:first-child {
+    transform:
+        translate(-50%, -50%)
+        rotate(45deg);
+}
+
+.htbb-video-modal__close span:last-child {
+    transform:
+        translate(-50%, -50%)
+        rotate(-45deg);
+}
+
+
+/* ============================================================
+   TABLET
+   ============================================================ */
+
+@media (max-width: 900px) {
+
+    .htbb-videos__grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+}
+
+
+/* ============================================================
+   MOBILE
+   ============================================================ */
+
+@media (max-width: 600px) {
+
+    .htbb-videos__categories {
+        gap: 45px;
+    }
+
+    .htbb-videos__category .header-bar {
+        margin-bottom: 30px;
+    }
+
+    .htbb-videos__grid {
+        grid-template-columns: 1fr;
+        gap: 32px;
+    }
+
+    .htbb-videos__thumbnail {
+        border-width: 7px;
+    }
+
+    .htbb-videos__play {
+        width: 60px;
+        height: 60px;
+    }
+
+    .htbb-videos__play span {
+        border-top-width: 14px;
+        border-bottom-width: 14px;
+        border-left-width: 22px;
+    }
+
+    .htbb-video-modal__dialog {
+        width:
+            calc(100% - 24px);
+    }
+
+    .htbb-video-modal__close {
+        top: -44px;
+    }
+
+}
