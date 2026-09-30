@@ -4,8 +4,9 @@
 
 #htbb-faq {
 	width: 100%;
-	max-width: 860px;
+	max-width: 1390px;
 	margin: 0 auto;
+    padding: 0 20px;
 }
 
 /* Reserve a little space while Google Sheets loads. */
@@ -18,19 +19,20 @@
    ------------------------------------------------------------ */
 
 .htbb-faq__item {
-	border-bottom: 1px solid #333f48;
+	
 	transition:
 		background-color 0.2s ease,
 		color 0.2s ease;
 }
 
 .htbb-faq__item:first-child {
-	border-top: 1px solid #333f48;
+
 }
 
 .htbb-faq__heading {
 	margin: 0;
 	font: inherit;
+    font-size: 28px;
 }
 
 /* ------------------------------------------------------------
@@ -66,8 +68,9 @@
 
 .htbb-faq__label {
 	flex: 1;
-
-	font-weight: 600;
+    font-family: 'avenir next' !important;
+    font-weight: 700;
+    font-size: 28px;
 	line-height: 1.25;
 }
 
@@ -76,7 +79,7 @@
    ------------------------------------------------------------ */
 
 .htbb-faq__icon {
-	--htbb-faq-icon-weight: 2px;
+	--htbb-faq-icon-weight: 6px;
 
 	position: relative;
 
@@ -136,7 +139,9 @@
 		1.5rem;
 
 	color: inherit;
-
+    font-size: 26px;
+    font-weight: 400;
+    font-family: 'avenir next' !important;
 	line-height: 1.5;
 }
 
