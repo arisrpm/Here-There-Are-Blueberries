@@ -1,713 +1,730 @@
 (() => {
-	'use strict';
-
-	/**
-	 * HTBB — FAQ
-	 * Google Sheets + Accessible Accordion
-	 *
-	 * Sheet columns:
-	 *
-	 * A = QUESTION
-	 * B = ANSWER
-	 *
-	 * Supported HTML entered directly into Google Sheets:
-	 *
-	 * <a href="https://example.com">Link</a>
-	 * <br>
-	 * <em>...</em>
-	 * <i>...</i>
-	 * <strong>...</strong>
-	 * <b>...</b>
-	 * <span>...</span>
-	 * <small>...</small>
-	 * <sup>...</sup>
-	 * <sub>...</sub>
-	 * <u>...</u>
-	 * <p>...</p>
-	 * <ul>...</ul>
-	 * <ol>...</ol>
-	 * <li>...</li>
-	 *
-	 * Unsafe tags and attributes are removed.
-	 */
-
-	const MODULE = '[HTBB FAQ]';
-
-
-	// ------------------------------------------------------------
-	// CONFIG
-	// ------------------------------------------------------------
-
-	const config = {
-		sheetId:
-			'19QAEno8goOYyxhKlsl3Q8SpZRmsWZXRYaazUUkrJIjk',
-
-		sheetName:
-			'FAQs',
-
-		apiKey:
-			'AIzaSyDbiZYZBlzvpHdDUWtVs76H3akcKuD-qQE',
-
-		selector:
-			'#htbb-faq',
-
-		// false = opening one answer closes the others.
-		allowMultiple:
-			false,
-	};
-
-
-	// ------------------------------------------------------------
-	// HELPERS
-	// ------------------------------------------------------------
-
-	const esc = value => {
-		return String(value ?? '')
-			.replace(/&/g, '&amp;')
-			.replace(/</g, '&lt;')
-			.replace(/>/g, '&gt;')
-			.replace(/"/g, '&quot;')
-			.replace(/'/g, '&#039;');
-	};
-
-
-	const normalizeUrl = value => {
-
-		const url =
-			String(value || '').trim();
-
-		if (!url) {
-			return '';
-		}
-
-		try {
-
-			/*
-			 * Allow relative links as well as absolute URLs.
-			 * Using the current page as the base lets:
-			 *
-			 * /tickets
-			 * #section
-			 *
-			 * remain valid.
-			 */
-
-			const parsed =
-				new URL(
-					url,
-					window.location.href
-				);
-
-			if (
-				parsed.protocol !== 'http:' &&
-				parsed.protocol !== 'https:'
-			) {
-				return '';
-			}
-
-			/*
-			 * Preserve relative/hash links exactly as entered.
-			 */
-
-			if (
-				url.startsWith('/') ||
-				url.startsWith('#')
-			) {
-				return url;
-			}
-
-			return parsed.href;
-
-		} catch {
-			return '';
-		}
-	};
-
-
-	// ------------------------------------------------------------
-	// SAFE HTML
-	// ------------------------------------------------------------
-
-	const ALLOWED_TAGS =
-		new Set([
-			'A',
-			'BR',
-			'EM',
-			'I',
-			'STRONG',
-			'B',
-			'SPAN',
-			'SMALL',
-			'SUP',
-			'SUB',
-			'U',
-			'P',
-			'UL',
-			'OL',
-			'LI',
-		]);
-
-
-	/**
-	 * Convert a parsed DOM node back into safe HTML.
-	 *
-	 * This gives us more control than a regex because
-	 * links contain attributes such as href and target.
-	 */
-	const sanitizeNode = node => {
-
-		// Plain text.
-		if (
-			node.nodeType ===
-			Node.TEXT_NODE
-		) {
-			return esc(
-				node.nodeValue
-			);
-		}
-
-
-		// Ignore comments, scripts, etc.
-		if (
-			node.nodeType !==
-			Node.ELEMENT_NODE
-		) {
-			return '';
-		}
-
-
-		const tag =
-			node.tagName.toUpperCase();
-
-
-		/*
-		 * Process children first.
-		 */
-		const inner =
-			Array
-				.from(
-					node.childNodes
-				)
-				.map(
-					sanitizeNode
-				)
-				.join('');
-
-
-		/*
-		 * If the tag isn't approved, remove the tag
-		 * itself but keep its text/content.
-		 */
-		if (
-			!ALLOWED_TAGS.has(tag)
-		) {
-			return inner;
-		}
-
-
-		// ----------------------------------------
-		// BR
-		// ----------------------------------------
-
-		if (
-			tag === 'BR'
-		) {
-			return '<br>';
-		}
-
-
-		// ----------------------------------------
-		// LINKS
-		// ----------------------------------------
-
-		if (
-			tag === 'A'
-		) {
-
-			const href =
-				normalizeUrl(
-					node.getAttribute(
-						'href'
-					)
-				);
-
-			/*
-			 * Bad/missing URL:
-			 * keep link text, remove the link.
-			 */
-			if (!href) {
-				return inner;
-			}
-
-
-			const target =
-				node.getAttribute(
-					'target'
-				);
-
-
-			/*
-			 * Only honor _blank.
-			 * Otherwise the link behaves normally.
-			 */
-			if (
-				target === '_blank'
-			) {
-
-				return (
-					`<a ` +
-					`href="${esc(href)}" ` +
-					`target="_blank" ` +
-					`rel="noopener noreferrer">` +
-					`${inner}` +
-					`</a>`
-				);
-			}
-
-
-			return (
-				`<a href="${esc(href)}">` +
-				`${inner}` +
-				`</a>`
-			);
-		}
-
-
-		// ----------------------------------------
-		// SAFE FORMATTING TAGS
-		// ----------------------------------------
-
-		const safeTag =
-			tag.toLowerCase();
-
-		return (
-			`<${safeTag}>` +
-			`${inner}` +
-			`</${safeTag}>`
-		);
-	};
-
-
-	/**
-	 * Parse HTML entered into Google Sheets,
-	 * sanitize it, and return safe markup.
-	 */
-	const richText = value => {
-
-		const raw =
-			String(
-				value || ''
-			);
-
-		if (!raw) {
-			return '';
-		}
-
-
-		const doc =
-			new DOMParser()
-				.parseFromString(
-					`<div id="htbb-rich-text">${raw}</div>`,
-					'text/html'
-				);
-
-
-		const root =
-			doc.getElementById(
-				'htbb-rich-text'
-			);
-
-		if (!root) {
-			return esc(raw);
-		}
-
-
-		return Array
-			.from(
-				root.childNodes
-			)
-			.map(
-				sanitizeNode
-			)
-			.join('');
-	};
-
-
-	// ------------------------------------------------------------
-	// FORMAT ANSWER
-	// ------------------------------------------------------------
-
-	const formatAnswer = value => {
-
-		/*
-		 * Preserve normal line breaks entered into
-		 * Google Sheets.
-		 *
-		 * Existing <br> tags are handled separately
-		 * by richText().
-		 */
-
-		const raw =
-			String(
-				value || ''
-			)
-				.replace(
-					/\r\n?/g,
-					'\n'
-				);
-
-
-		/*
-		 * Convert literal line breaks to <br> BEFORE
-		 * parsing/sanitizing the HTML.
-		 */
-
-		return richText(
-			raw.replace(
-				/\n/g,
-				'<br>'
-			)
-		);
-	};
-
-
-	// ------------------------------------------------------------
-	// GET FAQS
-	// ------------------------------------------------------------
-
-	const getFAQs = async () => {
-
-		const range =
-			encodeURIComponent(
-				`${config.sheetName}!A:B`
-			);
-
-		const url =
-			`https://sheets.googleapis.com/v4/spreadsheets/` +
-			`${config.sheetId}/values/${range}` +
-			`?key=${encodeURIComponent(config.apiKey)}`;
-
-
-		const response =
-			await fetch(url);
-
-
-		if (!response.ok) {
-
-			throw new Error(
-				`Google Sheets request failed: ` +
-				`${response.status}`
-			);
-		}
-
-
-		const data =
-			await response.json();
-
-
-		const rows =
-			data.values || [];
-
-
-		/*
-		 * Row 1:
-		 *
-		 * QUESTION | ANSWER
-		 */
-
-		return rows
-			.slice(1)
-
-			.map(row => {
-
-				return {
-
-					question:
-						String(
-							row[0] || ''
-						).trim(),
-
-					answer:
-						String(
-							row[1] || ''
-						).trim(),
-				};
-			})
-
-			.filter(item =>
-				item.question &&
-				item.answer
-			);
-	};
-
-
-	// ------------------------------------------------------------
-	// RENDER ITEM
-	// ------------------------------------------------------------
-
-	const renderItem = (
-		faq,
-		index
-	) => {
-
-		const questionId =
-			`htbb-faq-question-${index}`;
-
-		const answerId =
-			`htbb-faq-answer-${index}`;
-
-
-		return `
-			<div class="htbb-faq__item">
-
-				<h3 class="htbb-faq__heading">
-
-					<button
-						class="htbb-faq__question"
-						type="button"
-						id="${questionId}"
-						aria-expanded="false"
-						aria-controls="${answerId}"
-					>
-
-						<span class="htbb-faq__label">
-							${richText(faq.question)}
-						</span>
-
-						<span
-							class="htbb-faq__icon"
-							aria-hidden="true"
-						></span>
-
-					</button>
-
-				</h3>
-
-
-				<div
-					class="htbb-faq__answer"
-					id="${answerId}"
-					role="region"
-					aria-labelledby="${questionId}"
-					hidden
-				>
-
-					<div class="htbb-faq__answer-inner">
-						${formatAnswer(faq.answer)}
-					</div>
-
-				</div>
-
-			</div>
-		`;
-	};
-
-
-	// ------------------------------------------------------------
-	// OPEN / CLOSE
-	// ------------------------------------------------------------
-
-	const setItemOpen = (
-		button,
-		open
-	) => {
+    'use strict';
+
+    /**
+     * HTBB — FAQ
+     * Google Sheets + Accessible Accordion
+     *
+     * Supports native Google Sheets formatting:
+     *
+     * - Hyperlinks
+     * - Bold
+     * - Italic
+     * - Bold + Italic
+     * - Line breaks
+     *
+     * Also supports manually entered safe HTML:
+     *
+     * <br>
+     * <em>...</em>
+     * <i>...</i>
+     * <strong>...</strong>
+     * <b>...</b>
+     * <span>...</span>
+     * <a href="...">...</a>
+     */
+
+    const MODULE = '[HTBB FAQ]';
+
+
+    // ------------------------------------------------------------
+    // CONFIG
+    // ------------------------------------------------------------
+
+    const config = {
+        sheetId:
+            '19QAEno8goOYyxhKlsl3Q8SpZRmsWZXRYaazUUkrJIjk',
+
+        sheetName:
+            'FAQs',
+
+        apiKey:
+            'AIzaSyDbiZYZBlzvpHdDUWtVs76H3akcKuD-qQE',
+
+        selector:
+            '#htbb-faq',
+
+        // false = opening one answer closes the others.
+        allowMultiple:
+            false,
+    };
+
+
+    // ------------------------------------------------------------
+    // HELPERS
+    // ------------------------------------------------------------
+
+    const esc = value => {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    };
+
+
+    const normalizeUrl = value => {
+
+        const url =
+            String(value || '').trim();
+
+        if (!url) {
+            return '';
+        }
+
+        try {
+
+            const parsed =
+                new URL(url);
+
+            if (
+                parsed.protocol !== 'http:' &&
+                parsed.protocol !== 'https:' &&
+                parsed.protocol !== 'mailto:' &&
+                parsed.protocol !== 'tel:'
+            ) {
+                return '';
+            }
+
+            return parsed.href;
+
+        } catch {
+            return '';
+        }
+    };
+
+
+    // ------------------------------------------------------------
+    // MANUALLY ENTERED HTML
+    // ------------------------------------------------------------
+
+    /**
+     * This is retained so manually entered HTML still works.
+     *
+     * Native Google Sheets formatting does NOT require HTML.
+     */
+
+    const restoreSafeHtml = value => {
+
+        return esc(value)
+
+            // Basic formatting.
+            .replace(
+                /&lt;(\/?(?:em|strong|i|b|span)\s*)&gt;/gi,
+                '<$1>'
+            )
+
+            // BR.
+            .replace(
+                /&lt;br\s*\/?&gt;/gi,
+                '<br>'
+            )
+
+            // Safe manually entered links.
+            .replace(
+                /&lt;a\s+href=(?:&quot;|&#039;)(https?:\/\/[^"'<>]+?)(?:&quot;|&#039;)\s*&gt;([\s\S]*?)&lt;\/a&gt;/gi,
+                (_, href, text) => {
+
+                    const safeUrl =
+                        normalizeUrl(href);
+
+                    if (!safeUrl) {
+                        return text;
+                    }
+
+                    return (
+                        `<a ` +
+                        `href="${esc(safeUrl)}" ` +
+                        `target="_blank" ` +
+                        `rel="noopener noreferrer">` +
+                        `${text}` +
+                        `</a>`
+                    );
+                }
+            );
+    };
+
+
+    // ------------------------------------------------------------
+    // GOOGLE SHEETS RICH TEXT
+    // ------------------------------------------------------------
+
+    /**
+     * Convert one portion of a Google Sheets cell into HTML.
+     */
+
+    const formatRun = (
+        text,
+        format = {},
+        link = ''
+    ) => {
+
+        if (!text) {
+            return '';
+        }
+
+        let html =
+            restoreSafeHtml(text)
+                .replace(/\r?\n/g, '<br>');
+
+
+        // Native Google Sheets italic.
+        if (format.italic) {
+            html =
+                `<em>${html}</em>`;
+        }
+
+
+        // Native Google Sheets bold.
+        if (format.bold) {
+            html =
+                `<strong>${html}</strong>`;
+        }
+
+
+        // Native Google Sheets hyperlink.
+        const safeLink =
+            normalizeUrl(link);
+
+        if (safeLink) {
+
+            html =
+                `<a ` +
+                `href="${esc(safeLink)}" ` +
+                `target="_blank" ` +
+                `rel="noopener noreferrer">` +
+                `${html}` +
+                `</a>`;
+        }
+
+        return html;
+    };
+
+
+    /**
+     * Convert a Google Sheets cell into HTML.
+     *
+     * Sheets supplies:
+     *
+     * formattedValue
+     * textFormatRuns[]
+     *
+     * Each run tells us where formatting changes.
+     */
+
+    const cellToHtml = cell => {
+
+        if (!cell) {
+            return '';
+        }
+
+        const value =
+            String(
+                cell.formattedValue ??
+                cell.effectiveValue?.stringValue ??
+                ''
+            );
+
+
+        if (!value) {
+            return '';
+        }
+
+
+        const runs =
+            Array.isArray(
+                cell.textFormatRuns
+            )
+                ? cell.textFormatRuns
+                : [];
+
+
+        /**
+         * Entire-cell hyperlink.
+         *
+         * Sheets may store a hyperlink here instead
+         * of inside a textFormatRun.
+         */
+        const cellLink =
+            cell.hyperlink || '';
+
+
+        /**
+         * No rich-text runs.
+         *
+         * Use the cell's base formatting.
+         */
+        if (!runs.length) {
+
+            const format =
+                cell.effectiveFormat
+                    ?.textFormat || {};
+
+            return formatRun(
+                value,
+                format,
+                cellLink
+            );
+        }
+
+
+        let html = '';
+
+
+        for (
+            let i = 0;
+            i < runs.length;
+            i++
+        ) {
+
+            const run =
+                runs[i];
+
+            const start =
+                run.startIndex || 0;
+
+            const end =
+                i + 1 < runs.length
+                    ? runs[i + 1].startIndex
+                    : value.length;
+
+            const text =
+                value.slice(
+                    start,
+                    end
+                );
+
+            const format =
+                run.format || {};
+
+
+            /**
+             * Google Sheets stores native links inside
+             * the run's format.link.uri.
+             */
+
+            const link =
+                format.link?.uri ||
+                cellLink ||
+                '';
+
+            html +=
+                formatRun(
+                    text,
+                    format,
+                    link
+                );
+        }
+
+        return html;
+    };
+
+
+    // ------------------------------------------------------------
+    // GOOGLE SHEETS
+    // ------------------------------------------------------------
+
+    const getFAQs = async () => {
 
-		const answer =
-			document.getElementById(
-				button.getAttribute(
-					'aria-controls'
-				)
-			);
+        /**
+         * IMPORTANT:
+         *
+         * We're intentionally using the spreadsheets endpoint
+         * instead of /values/.
+         *
+         * /values/ strips rich-text hyperlink information.
+         */
 
+        const range =
+            encodeURIComponent(
+                `${config.sheetName}!A:B`
+            );
+
+        const fields =
+            encodeURIComponent(
+                [
+                    'sheets.data.rowData.values.formattedValue',
+                    'sheets.data.rowData.values.effectiveValue',
+                    'sheets.data.rowData.values.hyperlink',
+                    'sheets.data.rowData.values.textFormatRuns',
+                    'sheets.data.rowData.values.effectiveFormat.textFormat',
+                ].join(',')
+            );
 
-		if (!answer) {
-			return;
-		}
+        const url =
+            `https://sheets.googleapis.com/v4/spreadsheets/` +
+            `${config.sheetId}` +
+            `?ranges=${range}` +
+            `&includeGridData=true` +
+            `&fields=${fields}` +
+            `&key=${encodeURIComponent(config.apiKey)}`;
 
+
+        const response =
+            await fetch(url);
 
-		button.setAttribute(
-			'aria-expanded',
-			String(open)
-		);
+
+        if (!response.ok) {
 
+            const errorText =
+                await response.text();
 
-		answer.hidden =
-			!open;
-	};
+            throw new Error(
+                `Google Sheets request failed: ` +
+                `${response.status} ${errorText}`
+            );
+        }
 
 
-	// ------------------------------------------------------------
-	// EVENTS
-	// ------------------------------------------------------------
+        const data =
+            await response.json();
 
-	const bindEvents = container => {
 
-		container.addEventListener(
-			'click',
-			event => {
+        const rows =
+            data
+                ?.sheets?.[0]
+                ?.data?.[0]
+                ?.rowData ||
+            [];
 
-				const button =
-					event.target.closest(
-						'.htbb-faq__question'
-					);
 
+        /**
+         * Row 1:
+         *
+         * QUESTION | ANSWER
+         *
+         * Skip header row.
+         */
 
-				if (
-					!button ||
-					!container.contains(button)
-				) {
-					return;
-				}
+        return rows
+            .slice(1)
 
+            .map(row => {
 
-				const isOpen =
-					button.getAttribute(
-						'aria-expanded'
-					) === 'true';
+                const questionCell =
+                    row.values?.[0];
 
+                const answerCell =
+                    row.values?.[1];
 
-				/*
-				 * Close any currently open FAQ
-				 * before opening the new one.
-				 */
-				if (
-					!config.allowMultiple &&
-					!isOpen
-				) {
 
-					container
-						.querySelectorAll(
-							'.htbb-faq__question[aria-expanded="true"]'
-						)
-						.forEach(other => {
+                const questionText =
+                    String(
+                        questionCell?.formattedValue ||
+                        ''
+                    ).trim();
 
-							setItemOpen(
-								other,
-								false
-							);
 
-						});
-				}
+                const answerText =
+                    String(
+                        answerCell?.formattedValue ||
+                        ''
+                    ).trim();
 
 
-				setItemOpen(
-					button,
-					!isOpen
-				);
-			}
-		);
-	};
+                return {
 
+                    question:
+                        questionText,
 
-	// ------------------------------------------------------------
-	// INIT
-	// ------------------------------------------------------------
+                    questionHtml:
+                        cellToHtml(
+                            questionCell
+                        ),
 
-	const init = async () => {
+                    answer:
+                        answerText,
 
-		const container =
-			document.querySelector(
-				config.selector
-			);
+                    answerHtml:
+                        cellToHtml(
+                            answerCell
+                        ),
+                };
+            })
 
+            .filter(item =>
+                item.question &&
+                item.answer
+            );
+    };
 
-		if (!container) {
-			return;
-		}
 
+    // ------------------------------------------------------------
+    // RENDER ITEM
+    // ------------------------------------------------------------
 
-		container.classList.add(
-			'is-loading'
-		);
+    const renderItem = (
+        faq,
+        index
+    ) => {
 
+        const questionId =
+            `htbb-faq-question-${index}`;
 
-		container.setAttribute(
-			'aria-busy',
-			'true'
-		);
+        const answerId =
+            `htbb-faq-answer-${index}`;
 
 
-		try {
+        return `
+            <div class="htbb-faq__item">
 
-			const faqs =
-				await getFAQs();
+                <h3 class="htbb-faq__heading">
 
+                    <button
+                        class="htbb-faq__question"
+                        type="button"
+                        id="${questionId}"
+                        aria-expanded="false"
+                        aria-controls="${answerId}"
+                    >
 
-			console.log(
-				`${MODULE} Loaded ${faqs.length} FAQ(s).`,
-				faqs
-			);
+                        <span class="htbb-faq__label">
+                            ${faq.questionHtml}
+                        </span>
 
+                        <span
+                            class="htbb-faq__icon"
+                            aria-hidden="true"
+                        ></span>
 
-			if (!faqs.length) {
+                    </button>
 
-				container.hidden =
-					true;
+                </h3>
 
-				return;
-			}
 
+                <div
+                    class="htbb-faq__answer"
+                    id="${answerId}"
+                    role="region"
+                    aria-labelledby="${questionId}"
+                    hidden
+                >
 
-			container.innerHTML =
-				faqs
-					.map(
-						renderItem
-					)
-					.join('');
+                    <div class="htbb-faq__answer-inner">
+                        ${faq.answerHtml}
+                    </div>
 
+                </div>
 
-			bindEvents(
-				container
-			);
+            </div>
+        `;
+    };
 
 
-		} catch (error) {
+    // ------------------------------------------------------------
+    // OPEN / CLOSE
+    // ------------------------------------------------------------
 
-			console.error(
-				`${MODULE} Unable to load FAQs.`,
-				error
-			);
+    const setItemOpen = (
+        button,
+        open
+    ) => {
 
+        const answer =
+            document.getElementById(
+                button.getAttribute(
+                    'aria-controls'
+                )
+            );
 
-			container.hidden =
-				true;
 
+        if (!answer) {
+            return;
+        }
 
-		} finally {
 
-			container.removeAttribute(
-				'aria-busy'
-			);
+        button.setAttribute(
+            'aria-expanded',
+            String(open)
+        );
 
 
-			container.classList.remove(
-				'is-loading'
-			);
-		}
-	};
+        answer.hidden =
+            !open;
+    };
 
 
-	// ------------------------------------------------------------
-	// START
-	// ------------------------------------------------------------
+    // ------------------------------------------------------------
+    // EVENTS
+    // ------------------------------------------------------------
 
-	if (
-		document.readyState ===
-		'loading'
-	) {
+    const bindEvents = container => {
 
-		document.addEventListener(
-			'DOMContentLoaded',
-			init,
-			{
-				once: true,
-			}
-		);
+        container.addEventListener(
+            'click',
+            event => {
 
-	} else {
+                const button =
+                    event.target.closest(
+                        '.htbb-faq__question'
+                    );
 
-		init();
 
-	}
+                if (
+                    !button ||
+                    !container.contains(button)
+                ) {
+                    return;
+                }
+
+
+                const isOpen =
+                    button.getAttribute(
+                        'aria-expanded'
+                    ) === 'true';
+
+
+                /**
+                 * Close currently open FAQ
+                 * when multiple answers are disabled.
+                 */
+
+                if (
+                    !config.allowMultiple &&
+                    !isOpen
+                ) {
+
+                    container
+                        .querySelectorAll(
+                            '.htbb-faq__question[aria-expanded="true"]'
+                        )
+
+                        .forEach(other => {
+
+                            if (
+                                other !== button
+                            ) {
+
+                                setItemOpen(
+                                    other,
+                                    false
+                                );
+                            }
+                        });
+                }
+
+
+                setItemOpen(
+                    button,
+                    !isOpen
+                );
+            }
+        );
+    };
+
+
+    // ------------------------------------------------------------
+    // INIT
+    // ------------------------------------------------------------
+
+    const init = async () => {
+
+        const container =
+            document.querySelector(
+                config.selector
+            );
+
+
+        if (!container) {
+            return;
+        }
+
+
+        container.classList.add(
+            'is-loading'
+        );
+
+
+        container.setAttribute(
+            'aria-busy',
+            'true'
+        );
+
+
+        try {
+
+            const faqs =
+                await getFAQs();
+
+
+            console.log(
+                `${MODULE} Loaded ${faqs.length} FAQ(s).`,
+                faqs
+            );
+
+
+            if (!faqs.length) {
+
+                container.hidden =
+                    true;
+
+                return;
+            }
+
+
+            container.innerHTML =
+                faqs
+                    .map(renderItem)
+                    .join('');
+
+
+            bindEvents(
+                container
+            );
+
+
+            container.hidden =
+                false;
+
+
+        } catch (error) {
+
+            console.error(
+                `${MODULE} Unable to load FAQs.`,
+                error
+            );
+
+
+            container.hidden =
+                true;
+
+
+        } finally {
+
+            container.removeAttribute(
+                'aria-busy'
+            );
+
+
+            container.classList.remove(
+                'is-loading'
+            );
+        }
+    };
+
+
+    // ------------------------------------------------------------
+    // START
+    // ------------------------------------------------------------
+
+    if (
+        document.readyState ===
+        'loading'
+    ) {
+
+        document.addEventListener(
+            'DOMContentLoaded',
+            init,
+            {
+                once: true,
+            }
+        );
+
+    } else {
+
+        init();
+
+    }
 
 })();
