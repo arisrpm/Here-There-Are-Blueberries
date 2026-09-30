@@ -145,6 +145,11 @@
 	line-height: 1.5;
 }
 
+.htbb-faq__answer-inner a {
+    font-weight: bold;
+    text-decoration: underline;
+}
+
 .htbb-faq__answer-inner p {
 	margin: 0 0 1em;
 }
