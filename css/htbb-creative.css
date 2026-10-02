@@ -303,19 +303,46 @@ body.htbb-creative-modal-open {
 
 @media (max-width: 767px) {
 
-    .htbb-creative__grid {
-        gap: 24px;
-    }
+    /*
+     * Ignore the PER ROW grouping on mobile.
+     * The JS row wrappers remain in the DOM, but display: contents
+     * allows every creative card to participate in one continuous
+     * two-column grid.
+     */
 
-    .htbb-creative__row {
+    .htbb-creative__grid {
+        display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 24px 16px;
     }
 
-    /* A row containing only one person stays one column */
-    .htbb-creative__row[style*="--creative-columns: 1"] {
-        grid-template-columns: minmax(0, 1fr);
+    .htbb-creative__row {
+        display: contents;
     }
+
+    .htbb-creative__card {
+        width: 100%;
+        min-width: 0;
+    }
+
+    /*
+     * On desktop, one-person rows suppress the automatic <br>
+     * between first and last name.
+     *
+     * Once the rows are flattened on mobile, restore that break
+     * so names fit properly inside their two-column card.
+     */
+
+    .htbb-creative__row[style*="--creative-columns: 1"] .htbb-creative__name br {
+        display: initial;
+    }
+
+    .htbb-creative__row[style*="--creative-columns: 1"] .htbb-creative__last-name::before {
+        content: none;
+    }
+
+
+    /* Modal */
 
     .htbb-creative-modal__dialog {
         width: calc(100% - 24px);
@@ -329,8 +356,15 @@ body.htbb-creative-modal-open {
     }
 }
 
+
 @media (max-width: 500px) {
-    .htbb-creative__row {
-        grid-template-columns: repeat(1, minmax(0, 1fr));
+
+    /*
+     * Continue the flattened layout,
+     * but switch everything to one column.
+     */
+
+    .htbb-creative__grid {
+        grid-template-columns: minmax(0, 1fr);
     }
 }
