@@ -42,8 +42,8 @@
         /docs\.google\.com\/document\/d\/(?:e\/)?([\w-]{16,})/;
 
     const INLINE_TAGS =
-    /&lt;(\/?(?:em|strong|i|b|br|small|span)\s*\/?)&gt;/gi;
-        
+        /&lt;(\/?(?:em|strong|i|b|br|small|span)\s*\/?)&gt;/gi;
+
 
     const bioCache =
         new Map();
@@ -73,7 +73,7 @@
 
 
     /**
-     * Allow only basic formatting entered
+     * Allow only approved inline HTML entered
      * directly into Google Sheets.
      *
      * Supported:
@@ -82,6 +82,8 @@
      * <b>
      * <em>
      * <i>
+     * <small>
+     * <span>
      * <br>
      */
 
@@ -95,29 +97,39 @@
     };
 
 
+    // ------------------------------------------------------------
+    // FORMAT NAME
+    // ------------------------------------------------------------
+
     /**
-     * Format a person's name onto two lines.
+     * Automatically places the final word of a name
+     * onto the second line while PRESERVING approved
+     * inline HTML.
      *
-     * Examples:
+     * Example:
      *
-     * MOISÉS KAUFMAN
-     *
-     * becomes:
-     *
-     * MOISÉS
-     * KAUFMAN
-     *
-     *
-     * MARY JANE SMITH
+     * JOHN SMITH
      *
      * becomes:
      *
-     * MARY JANE
-     * SMITH
+     * JOHN
+     * <span class="htbb-creative__last-name">
+     *     SMITH
+     * </span>
      *
      *
-     * If the client manually enters <br>,
-     * preserve their formatting instead.
+     * JOHN <small>Mc</small>LANE
+     *
+     * becomes:
+     *
+     * JOHN
+     * <span class="htbb-creative__last-name">
+     *     <small>Mc</small>LANE
+     * </span>
+     *
+     *
+     * If <br> is manually supplied in the Sheet,
+     * preserve the client's formatting exactly.
      */
 
     const formatName = value => {
@@ -126,12 +138,16 @@
             String(value || '')
                 .trim();
 
+
         if (!raw) {
             return '';
         }
 
 
-        // Client supplied their own line break.
+        // --------------------------------------------------------
+        // MANUAL LINE BREAK
+        // --------------------------------------------------------
+
         if (
             /<br\s*\/?>/i.test(raw)
         ) {
@@ -142,28 +158,64 @@
         }
 
 
-        /**
-         * Strip approved formatting tags temporarily
-         * when determining where the final space is.
-         *
-         * For simple names this lets us split the
-         * last word onto its own line.
-         */
+        // --------------------------------------------------------
+        // FIND LAST SPACE OUTSIDE HTML TAGS
+        // --------------------------------------------------------
 
-        const plain =
-            raw
-                .replace(
-                    /<\/?(?:em|strong|i|b|small|span)>/gi,
-                    ''
-                )
-                .trim();
+        let lastSpace =
+            -1;
+
+        let insideTag =
+            false;
 
 
-        const lastSpace =
-            plain.lastIndexOf(' ');
+        for (
+            let index = 0;
+            index < raw.length;
+            index++
+        ) {
+
+            const character =
+                raw[index];
 
 
-        // Single-word name.
+            if (
+                character === '<'
+            ) {
+
+                insideTag =
+                    true;
+
+                continue;
+            }
+
+
+            if (
+                character === '>'
+            ) {
+
+                insideTag =
+                    false;
+
+                continue;
+            }
+
+
+            if (
+                !insideTag &&
+                /\s/.test(character)
+            ) {
+
+                lastSpace =
+                    index;
+            }
+        }
+
+
+        // --------------------------------------------------------
+        // SINGLE-WORD NAME
+        // --------------------------------------------------------
+
         if (
             lastSpace === -1
         ) {
@@ -174,26 +226,12 @@
         }
 
 
-        /**
-         * If HTML formatting is present, don't try
-         * to split through the markup automatically.
-         *
-         * The client can use <br> explicitly for
-         * special formatted names.
-         */
-
-        if (
-            /<\/?(?:em|strong|i|b|span)>/i.test(raw)
-        ) {
-
-            return safeInlineHtml(
-                raw
-            );
-        }
-
+        // --------------------------------------------------------
+        // SPLIT ORIGINAL MARKUP
+        // --------------------------------------------------------
 
         const first =
-            plain
+            raw
                 .slice(
                     0,
                     lastSpace
@@ -202,7 +240,7 @@
 
 
         const last =
-            plain
+            raw
                 .slice(
                     lastSpace + 1
                 )
@@ -223,7 +261,9 @@
         return (
             `${safeInlineHtml(first)}` +
             `<br>` +
-            `<span class="htbb-creative__last-name">${safeInlineHtml(last)}</span>`
+            `<span class="htbb-creative__last-name">` +
+                `${safeInlineHtml(last)}` +
+            `</span>`
         );
     };
 
@@ -234,14 +274,17 @@
             String(value || '')
                 .trim();
 
+
         if (!url) {
             return '';
         }
+
 
         try {
 
             const parsed =
                 new URL(url);
+
 
             if (
                 parsed.protocol !== 'http:' &&
@@ -249,6 +292,7 @@
             ) {
                 return '';
             }
+
 
             return parsed.href;
 
@@ -274,28 +318,13 @@
     // PER ROW
     // ------------------------------------------------------------
 
-    /**
-     * Google Sheet can contain:
-     *
-     * One
-     * Two
-     * Three
-     * Four
-     *
-     * OR:
-     *
-     * 1
-     * 2
-     * 3
-     * 4
-     */
-
     const parsePerRow = value => {
 
         const raw =
             String(value || '')
                 .trim()
                 .toLowerCase();
+
 
         const values = {
             one: 1,
@@ -306,14 +335,17 @@
             six: 6,
         };
 
+
         if (
             Object.prototype.hasOwnProperty.call(
                 values,
                 raw
             )
         ) {
+
             return values[raw];
         }
+
 
         const numeric =
             parseInt(
@@ -321,13 +353,16 @@
                 10
             );
 
+
         if (
             Number.isInteger(numeric) &&
             numeric >= 1 &&
             numeric <= 6
         ) {
+
             return numeric;
         }
+
 
         return 1;
     };
@@ -337,13 +372,6 @@
     // BIO NAVIGATION
     // ------------------------------------------------------------
 
-    /**
-     * Finds the previous/next person
-     * who actually has a bio.
-     *
-     * Does NOT loop.
-     */
-
     const getBioIndex = (
         currentIndex,
         direction
@@ -352,6 +380,7 @@
         let index =
             currentIndex +
             direction;
+
 
         while (
             index >= 0 &&
@@ -363,12 +392,15 @@
                     people[index]
                 )
             ) {
+
                 return index;
             }
+
 
             index +=
                 direction;
         }
+
 
         return null;
     };
@@ -420,6 +452,7 @@
             return '';
         }
 
+
         try {
 
             const url =
@@ -427,6 +460,7 @@
                     href,
                     'https://docs.google.com'
                 );
+
 
             if (
                 url.hostname.endsWith(
@@ -447,6 +481,7 @@
             // Use original href.
         }
 
+
         return href;
     };
 
@@ -458,6 +493,7 @@
 
         const bold =
             new Set();
+
 
         doc
             .querySelectorAll(
@@ -477,24 +513,29 @@
                             /font-style\s*:\s*italic/i
                                 .test(body)
                         ) {
+
                             italic.add(
                                 name
                             );
                         }
 
+
                         if (
                             /font-weight\s*:\s*(bold|[6-9]00)/i
                                 .test(body)
                         ) {
+
                             bold.add(
                                 name
                             );
                         }
 
+
                         return '';
                     }
                 );
             });
+
 
         return {
             italic,
@@ -523,6 +564,7 @@
             node.nodeType !==
             Node.ELEMENT_NODE
         ) {
+
             return '';
         }
 
@@ -530,6 +572,7 @@
         if (
             node.tagName === 'BR'
         ) {
+
             return '<br>';
         }
 
@@ -551,6 +594,7 @@
         if (
             !inner.trim()
         ) {
+
             return '';
         }
 
@@ -559,6 +603,7 @@
             Array.from(
                 node.classList || []
             );
+
 
         const style =
             node.getAttribute(
@@ -603,6 +648,7 @@
                     )
                 );
 
+
             if (href) {
 
                 inner =
@@ -643,10 +689,12 @@
                     'text/html'
                 );
 
+
         const sets =
             emphasisClasses(
                 doc
             );
+
 
         return Array
             .from(
@@ -1130,6 +1178,7 @@
                     -1
                 );
 
+
             const nextIndex =
                 getBioIndex(
                     index,
@@ -1141,6 +1190,7 @@
                 previousIndex === null &&
                 nextIndex === null
             ) {
+
                 return '';
             }
 
@@ -1246,6 +1296,7 @@
             !target ||
             !hasBio(person)
         ) {
+
             return;
         }
 
@@ -1291,6 +1342,7 @@
                 modal.dataset.creativeIndex !==
                 String(activeIndex)
             ) {
+
                 return;
             }
 
@@ -1338,6 +1390,7 @@
                 !person ||
                 !hasBio(person)
             ) {
+
                 return;
             }
 
@@ -1403,6 +1456,7 @@
             !person ||
             !hasBio(person)
         ) {
+
             return;
         }
 
@@ -1461,6 +1515,7 @@
             if (
                 activeIndex === null
             ) {
+
                 return;
             }
 
@@ -1475,6 +1530,7 @@
             if (
                 newIndex === null
             ) {
+
                 return;
             }
 
@@ -1587,6 +1643,7 @@
                             index
                         )
                     ) {
+
                         return;
                     }
 
@@ -1671,6 +1728,7 @@
                             'is-open'
                         )
                     ) {
+
                         return;
                     }
 
