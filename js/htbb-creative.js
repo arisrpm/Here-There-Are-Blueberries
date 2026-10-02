@@ -74,10 +74,14 @@
 
     const cleanText = value => {
         return String(value ?? '')
+            // Remove ASCII control characters except tab/newline.
+            .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '')
+            // Remove zero-width / invisible Unicode characters.
             .replace(/[\u200B-\u200D\u2060\uFEFF]/g, '')
+            // Normalize Unicode consistently.
             .normalize('NFC')
-            .trim();
-    };    
+            .trim();  
+    };  
 
     /**
      * Allow only approved inline HTML entered
@@ -96,7 +100,9 @@
 
     const safeInlineHtml = value => {
 
-        return esc(value)
+        return esc(
+            cleanText(value)
+        )
             .replace(
                 INLINE_TAGS,
                 '<$1>'
