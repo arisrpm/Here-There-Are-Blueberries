@@ -72,6 +72,13 @@
     };
 
 
+    const cleanText = value => {
+        return String(value ?? '')
+            .replace(/[\u200B-\u200D\u2060\uFEFF]/g, '')
+            .normalize('NFC')
+            .trim();
+    };    
+
     /**
      * Allow only approved inline HTML entered
      * directly into Google Sheets.
@@ -135,8 +142,7 @@
     const formatName = value => {
 
         const raw =
-            String(value || '')
-                .trim();
+            cleanText(value);
 
 
         if (!raw) {
@@ -833,9 +839,9 @@
             .map(row => ({
 
                 name:
-                    String(
-                        row[0] || ''
-                    ).trim(),
+                cleanText(
+                    row[0] || ''
+                ),
 
                 role:
                     String(
