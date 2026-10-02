@@ -42,7 +42,7 @@
         /docs\.google\.com\/document\/d\/(?:e\/)?([\w-]{16,})/;
 
     const INLINE_TAGS =
-    /&lt;(\/?(?:em|strong|i|b|br|span)\s*\/?)&gt;/gi;
+    /&lt;(\/?(?:em|strong|i|b|br|small|span)\s*\/?)&gt;/gi;
         
 
     const bioCache =
@@ -153,7 +153,7 @@
         const plain =
             raw
                 .replace(
-                    /<\/?(?:em|strong|i|b|span)>/gi,
+                    /<\/?(?:em|strong|i|b|small|span)>/gi,
                     ''
                 )
                 .trim();
