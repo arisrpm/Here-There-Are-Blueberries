@@ -434,6 +434,34 @@ body.htbb-cast-modal-open {
     }
 }
 
+@media (max-width: 490px) {
+    .htbb-cast__name {
+        font-size: 13px;
+    }
+    .htbb-cast__role {
+        font-size: 11px;
+    }
+    .htbb-cast__info {
+        padding: 10px 4px;
+    }
+    .header-bar h2 {
+        font-size: 30px;
+        padding: 10px;
+    }    
+}
+
+@media (max-width: 415px) {
+    .htbb-cast__name {
+        font-size: 10px;
+    }
+    .htbb-cast__role {
+        font-size: 9px;
+    }
+    .htbb-cast__info {
+        padding: 10px 2px;
+    }
+}
+
 
 /* ==========================================================
    REDUCED MOTION

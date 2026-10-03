@@ -367,4 +367,21 @@ body.htbb-creative-modal-open {
     .htbb-creative__grid {
         grid-template-columns: minmax(0, 1fr);
     }
+    .htbb-creative__role {
+        font-size: 20px;
+    }
+
+    .htbb-creative__name {
+        font-size: 24px;
+    }    
+}
+
+@media (max-width: 500px) {
+    .htbb-creative__role {
+        font-size: 16px;
+    }
+
+    .htbb-creative__name {
+        font-size: 20px;
+    }    
 }
