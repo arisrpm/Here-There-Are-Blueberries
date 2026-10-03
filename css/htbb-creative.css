@@ -373,10 +373,16 @@ body.htbb-creative-modal-open {
 
     .htbb-creative__name {
         font-size: 24px;
-    }    
+    }   
+    .htbb-creative {
+        padding-top: 40px;
+    } 
+    .htbb-creative__name br {
+        display: none !important;
+    }
 }
 
-@media (max-width: 500px) {
+@media (max-width: 415px) {
     .htbb-creative__role {
         font-size: 16px;
     }
