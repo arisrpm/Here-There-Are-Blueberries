@@ -434,7 +434,13 @@ body.htbb-cast-modal-open {
     }
 }
 
-@media (max-width: 490px) {
+@media (max-width: 500px) {
+    .htbb-cast__name br {
+        display: none;
+    }
+    .htbb-cast__name-break::before {
+        content: " ";
+    }    
     .htbb-cast__name {
         font-size: 13px;
     }
@@ -447,7 +453,7 @@ body.htbb-cast-modal-open {
     .header-bar h2 {
         font-size: 30px;
         padding: 10px;
-    }    
+    }       
 }
 
 @media (max-width: 415px) {

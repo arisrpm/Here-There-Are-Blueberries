@@ -31,6 +31,8 @@
         apiKey: 'AIzaSyDbiZYZBlzvpHdDUWtVs76H3akcKuD-qQE',
         range: 'A:J',
     };
+
+
     // Google Docs share URL.
     const DOC_URL =
         /docs\.google\.com\/document\/d\/(?:e\/)?([\w-]{16,})/;
@@ -89,6 +91,30 @@
                 INLINE_TAGS,
                 '<$1>'
             );
+    };
+
+
+    /**
+     * Format cast names so anything following a manual
+     * <br> can be targeted separately with CSS.
+     *
+     * Example:
+     *
+     * Michelle<br>Beck
+     *
+     * becomes:
+     *
+     * Michelle<br><span class="htbb-cast__name-break">Beck</span>
+     */
+    const formatCastName = value => {
+
+        const html =
+            safeInlineHtml(value);
+
+        return html.replace(
+            /<br\s*\/?>\s*(.+)$/i,
+            '<br><span class="htbb-cast__name-break">$1</span>'
+        );
     };
 
 
@@ -666,7 +692,7 @@
             <div class="htbb-cast__info">
 
                 <h3 class="htbb-cast__name">
-                    ${safeInlineHtml(person.name)}
+                    ${formatCastName(person.name)}
                 </h3>
 
                 ${
@@ -931,7 +957,7 @@
                         id="htbb-cast-modal-name"
                         class="htbb-cast-modal__name"
                     >
-                        ${safeInlineHtml(person.name)}
+                        ${formatCastName(person.name)}
                     </h2>
 
                     ${
