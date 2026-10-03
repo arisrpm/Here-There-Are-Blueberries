@@ -31,7 +31,6 @@
         apiKey: 'AIzaSyDbiZYZBlzvpHdDUWtVs76H3akcKuD-qQE',
         range: 'A:J',
     };
-
     // Google Docs share URL.
     const DOC_URL =
         /docs\.google\.com\/document\/d\/(?:e\/)?([\w-]{16,})/;
@@ -40,9 +39,9 @@
     const DRIVE_FILE_URL =
         /drive\.google\.com\/file\/d\/([\w-]+)/;
 
-    // Safe inline HTML allowed in Sheet bios.
+    // Safe inline HTML allowed in Sheet content.
     const INLINE_TAGS =
-        /&lt;(\/?(?:em|strong|i|b|br)\s*\/?)&gt;/gi;
+        /&lt;(\/?(?:em|strong|i|b|br|small|span)\s*\/?)&gt;/gi;
 
     // Cache Google Docs.
     const bioCache = new Map();
@@ -63,6 +62,33 @@
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#039;');
+    };
+
+
+    /**
+     * Allow only approved inline HTML entered
+     * directly into Google Sheets.
+     *
+     * Supported:
+     *
+     * <strong>
+     * <b>
+     * <em>
+     * <i>
+     * <small>
+     * <span>
+     * <br>
+     *
+     * Everything is escaped first, then only
+     * these approved tags are restored.
+     */
+    const safeInlineHtml = value => {
+
+        return esc(value)
+            .replace(
+                INLINE_TAGS,
+                '<$1>'
+            );
     };
 
 
@@ -155,6 +181,7 @@
         ).length;
     };
 
+
     // ------------------------------------------------------------
     // GOOGLE DRIVE IMAGES
     // ------------------------------------------------------------
@@ -188,13 +215,7 @@
 
     const richText = value => {
 
-        return esc(value)
-
-            // Restore only our approved HTML.
-            .replace(
-                INLINE_TAGS,
-                '<$1>'
-            )
+        return safeInlineHtml(value)
 
             // Separate paragraphs on blank lines.
             .split(/\n{2,}/)
@@ -645,14 +666,14 @@
             <div class="htbb-cast__info">
 
                 <h3 class="htbb-cast__name">
-                    ${esc(person.name)}
+                    ${safeInlineHtml(person.name)}
                 </h3>
 
                 ${
                     person.role
                         ? `
                             <p class="htbb-cast__role">
-                                ${esc(person.role)}
+                                ${safeInlineHtml(person.role)}
                             </p>
                         `
                         : ''
@@ -910,14 +931,14 @@
                         id="htbb-cast-modal-name"
                         class="htbb-cast-modal__name"
                     >
-                        ${esc(person.name)}
+                        ${safeInlineHtml(person.name)}
                     </h2>
 
                     ${
                         person.role
                             ? `
                                 <div class="htbb-cast-modal__role">
-                                    ${esc(person.role)}
+                                    ${safeInlineHtml(person.role)}
                                 </div>
                             `
                             : ''
