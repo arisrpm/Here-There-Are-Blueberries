@@ -381,6 +381,9 @@ body.htbb-creative-modal-open {
     .htbb-creative__name br {
         display: none !important;
     }
+    .htbb-creative__name .htbb-creative__last-name {
+        margin: 0 6px;
+    }
 }
 
 @media (max-width: 415px) {
