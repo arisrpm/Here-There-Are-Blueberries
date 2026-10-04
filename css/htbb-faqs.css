@@ -226,6 +226,12 @@
 	#htbb-faq {
 		padding: 0;
 	}
+	.htbb-faq__question {
+		padding: 1rem 10px;
+	}
+	.htbb-faq__answer-inner {
+		padding: 0 10px 1rem;
+	}	
 
 }
 
