@@ -46,8 +46,9 @@
   max-width: 1000px;
   margin: 0 auto;
   text-align: center;
-  padding: 0 0 110px;
+  padding: 0 25px 110px;
   line-height: 1;
+  min-height: 255px;
 }
 
 .quotes-slider__item {
@@ -97,6 +98,14 @@
 
 @media (max-width: 940px) {
     .quotes-slider {
-        padding: 0 0 55px;
+        padding: 0 25px 55px;
     }
+    .quotes-slider__quote {
+        font-size: 30px;
+        line-height: 1;
+    }
+    .quotes-slider__author {
+        font-size: 20px;
+    }
+
 }

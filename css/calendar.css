@@ -429,6 +429,19 @@
   .htbb-calendar__legend {
     font-size: 14px;
   }
+  .htbb-calendar { 
+    padding: 15px;
+  }
+  .calendar-box>h2 {
+    font-size: 28px;
+  }
+  #htbb-calendar .htbb-calendar__month, #calendar h2 {
+    font-size: 24px;
+  }
+  .htbb-calendar__month p {
+    font-size: 12px;
+    line-height: 1;
+  }
 }
 
 /* ------------------------------------------------------------------ *
