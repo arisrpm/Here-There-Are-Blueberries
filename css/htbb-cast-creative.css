@@ -457,7 +457,10 @@ body.htbb-cast-modal-open {
     .header-bar h2 {
         font-size: 30px;
         padding: 10px;
-    }       
+    }  
+    .htbb-cast__info {
+        min-height: 85px;
+    }     
 }
 
 @media (max-width: 415px) {
