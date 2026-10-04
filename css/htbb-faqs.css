@@ -207,6 +207,10 @@
 
 	.htbb-faq__label {
 		font-size: 18px;
+		-webkit-hyphens: none !important;
+		hyphens: none !important;
+		word-break: normal !important;
+		overflow-wrap: normal !important;		
 	}
 
 	.htbb-faq__icon {
