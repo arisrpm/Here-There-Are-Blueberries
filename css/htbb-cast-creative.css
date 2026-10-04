@@ -53,7 +53,7 @@
     width: 100%;
     aspect-ratio: 4 / 5;
     overflow: hidden;
-    background: #ddd;
+    background: #000;
 }
 
 .htbb-cast__image {
