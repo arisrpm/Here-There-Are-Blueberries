@@ -366,7 +366,7 @@ body.htbb-creative-modal-open {
 
     .htbb-creative__grid {
         grid-template-columns: minmax(0, 1fr);
-        grid: 18px 16px;
+        gap: 18px 16px;
     }
     .htbb-creative__role {
         font-size: 18px;
