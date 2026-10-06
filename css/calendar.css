@@ -155,6 +155,11 @@
   display: none;
 }
 
+/* Sits tight under the Best Availability line when both are showing. */
+.htbb-calendar__legend:not([hidden]) + .htbb-calendar__legend--talkback {
+  margin-top: -1rem;
+}
+
 .htbb-calendar__month p {
   color: var(--cal-accent);
   line-height: 1.5;

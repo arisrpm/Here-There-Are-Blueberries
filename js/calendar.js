@@ -203,6 +203,7 @@
 
     legendText: 'Click on the date and time below for tickets.',
     legendBestAvailableText: ' Best Availability =',
+    legendTalkBackText: '* = Post-show talk-back',
 
     // Below this width the month grid is replaced by a vertical list of dates.
     // Set to '' to keep the grid at every size (it tightens up under 900px).
@@ -475,20 +476,14 @@
 
   const useList = () => Boolean(CONFIG.listBelow) && Boolean(media && media.matches);
 
-  const monthHasBestAvailable = (year, month) => {
+  /** Whether any performance has `flag` set, in the visible month or the whole run. */
+  const showLegend = (year, month, flag) => {
     const prefix = monthKey(year, month);
 
     return Object.entries(eventsByDate).some(
-      ([key, list]) => key.startsWith(prefix) && list.some(p => p.bestAvailable)
+      ([key, list]) =>
+        (!CONFIG.legendPerMonth || key.startsWith(prefix)) && list.some(p => p[flag])
     );
-  };
-
-  const showLegend = (year, month) => {
-    if (!CONFIG.legendPerMonth) {
-      return Object.values(eventsByDate).some(list => list.some(p => p.bestAvailable));
-    }
-
-    return monthHasBestAvailable(year, month);
   };
 
   const render = () => {
@@ -521,11 +516,15 @@
           ></button>
         </div>
 
-        <p class="htbb-calendar__legend"${showLegend(year, month) ? '' : ' hidden'}>
+        <p class="htbb-calendar__legend"${showLegend(year, month, 'bestAvailable') ? '' : ' hidden'}>
           ${CONFIG.legendBestAvailableText ? `${HTBB.esc(CONFIG.legendBestAvailableText)}` : ''}
           <span class="htbb-calendar__swatch" aria-hidden="true"></span>
           <span class="htbb-calendar__sr">highlighted showtimes</span>
         </p>
+
+        <p class="htbb-calendar__legend htbb-calendar__legend--talkback"${
+          CONFIG.legendTalkBackText && showLegend(year, month, 'talkBack') ? '' : ' hidden'
+        }>${HTBB.esc(CONFIG.legendTalkBackText)}</p>
 
         ${
           useList()
