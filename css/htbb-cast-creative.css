@@ -195,7 +195,7 @@
 .htbb-cast-modal__role {
     margin: 5px 0 25px;
     color: #333f48;
-    font-family: "alternate-gothic-condensed-a", sans-serif !important;
+    font-family: "avenir next", sans-serif !important;
     font-size: 18px;
     font-style: italic;
     text-transform: uppercase;
@@ -215,6 +215,14 @@
 
 .htbb-cast-modal__bio p:last-child {
     margin-bottom: 0;
+}
+
+.htbb-cast-modal__name br {
+    display: none;
+}
+
+.htbb-cast-modal__name .htbb-cast__name-break {
+    margin: 0 6px;
 }
 
 /* ==========================================================
