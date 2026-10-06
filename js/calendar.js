@@ -38,7 +38,7 @@
     spreadsheetId: '19QAEno8goOYyxhKlsl3Q8SpZRmsWZXRYaazUUkrJIjk',
     apiKey: 'AIzaSyDbiZYZBlzvpHdDUWtVs76H3akcKuD-qQE',
     tab: 'Calendar',
-    columns: 'A:E',
+    columns: 'A:G',
 
     // Set false before launch to silence the console warnings.
     debug: true,
@@ -262,7 +262,7 @@
     return `${year}-${pad(month)}-${pad(day)}`;
   };
 
-  const addPerformance = (list, time, flag, type) => {
+  const addPerformance = (list, time, flag, talkBack, type) => {
     const label = String(time || '').trim();
     if (!label) return;
 
@@ -271,6 +271,7 @@
       // Telecharge wants the time with no space: "7:00PM".
       urlTime: label.replace(/\s+/g, ''),
       bestAvailable: HTBB.bool(flag),
+      talkBack: HTBB.bool(talkBack),
       type,
     });
   };
@@ -283,8 +284,8 @@
       if (!key) return;
 
       const list = [];
-      addPerformance(list, row.matineeTime, row.matBestAvailable, 'matinee');
-      addPerformance(list, row.eveningTime, row.eveBestAvailable, 'evening');
+      addPerformance(list, row.matineeTime, row.matBestAvailable, row.matTalkBack, 'matinee');
+      addPerformance(list, row.eveningTime, row.eveBestAvailable, row.eveTalkBack, 'evening');
 
       // Days without a time are dark days; they need no entry.
       if (list.length) map[key] = list;
@@ -360,8 +361,8 @@
         href="${HTBB.esc(ticketUrl(key, performance))}"
         target="_blank"
         rel="noopener noreferrer"
-        aria-label="Buy tickets, ${HTBB.esc(longDate(key))} at ${HTBB.esc(performance.label)}"
-      >${HTBB.esc(performance.label)}</a>
+        aria-label="Buy tickets, ${HTBB.esc(longDate(key))} at ${HTBB.esc(performance.label)}${performance.talkBack ? ', with talk-back' : ''}"
+      >${HTBB.esc(performance.label)}${performance.talkBack ? '<span class="htbb-calendar__talkback" aria-hidden="true">*</span>' : ''}</a>
     </li>
   `;
 
