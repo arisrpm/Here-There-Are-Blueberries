@@ -203,7 +203,7 @@
 
     legendText: 'Click on the date and time below for tickets.',
     legendBestAvailableText: ' Best Availability =',
-    legendTalkBackText: '* = Post-show talk-back',
+    legendTalkBackText: '* = Widening The Lens Post-Show Conversation',
 
     // Below this width the month grid is replaced by a vertical list of dates.
     // Set to '' to keep the grid at every size (it tightens up under 900px).
