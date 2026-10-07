@@ -30,6 +30,7 @@ const JS = [
   'js/htbb-faqs.js',
   'js/htbb-cast-creative.js',
   'js/htbb-creative.js',
+  'js/htbb-lens.js'
 ];
 
 const read = file => fs.readFileSync(path.join(ROOT, file), 'utf8').trimEnd();
