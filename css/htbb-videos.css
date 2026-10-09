@@ -39,6 +39,7 @@
     padding: 0 25px;
     width: 1400px;
     margin: 0 auto 5em;
+    
 }
 
 
@@ -344,6 +345,7 @@ body.htbb-video-modal-open {
     .htbb-videos__grid {
         grid-template-columns: 1fr;
         gap: 32px;
+        margin-bottom: 0;
     }
 
     .htbb-videos__thumbnail {
